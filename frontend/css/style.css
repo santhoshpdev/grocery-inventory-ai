@@ -547,3 +547,131 @@ tbody tr:last-child td{border-bottom:none}
 .flex-center{display:flex;align-items:center;justify-content:center}
 .gap-8{gap:8px}
 .gap-12{gap:12px}
+
+/* ─── PARTICLE CANVAS ─── */
+#particle-canvas{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:0;opacity:0.5;
+}
+
+/* ─── MOUSE GLOW ─── */
+.mouse-glow{
+  position:fixed;pointer-events:none;z-index:0;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(5,150,105,0.08) 0%,transparent 70%);
+  transform:translate(-50%,-50%);transition:opacity 0.3s;
+  will-change:left,top;
+}
+
+/* ─── SCAN LINES ─── */
+.scan-lines{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:0;
+  background:repeating-linear-gradient(
+    0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px
+  );
+}
+
+/* ─── TYPEWRITER ─── */
+.typewriter-cursor::after{
+  content:'|';animation:blink 0.7s step-end infinite;
+  color:var(--primary-light);font-weight:300;
+}
+@keyframes blink{50%{opacity:0}}
+
+/* ─── STAGGERED ENTRANCE ─── */
+.animate-fade{
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.6s cubic-bezier(0.4,0,0.2,1),
+              transform 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+.animate-fade.in-view{opacity:1;transform:translateY(0)}
+.stagger-1{transition-delay:0.05s !important}
+.stagger-2{transition-delay:0.1s !important}
+.stagger-3{transition-delay:0.15s !important}
+.stagger-4{transition-delay:0.2s !important}
+.stagger-5{transition-delay:0.25s !important}
+.stagger-6{transition-delay:0.3s !important}
+.stagger-7{transition-delay:0.35s !important}
+.stagger-8{transition-delay:0.4s !important}
+
+/* ─── SKELETON LOADER ─── */
+.skeleton{
+  background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-elevated) 50%,var(--bg-card) 75%);
+  background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite;
+  border-radius:var(--radius-xs);
+}
+.skeleton-card{
+  height:100px;margin-bottom:16px;border-radius:var(--radius);
+}
+.skeleton-text{height:14px;margin-bottom:8px;width:60%}
+.skeleton-text.short{width:35%}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ─── GRADIENT BORDER ANIMATION ─── */
+.kpi-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background-size:200% 100%;
+  animation:gradientBorder 3s linear infinite;
+  opacity:0;transition:opacity var(--transition);
+}
+.kpi-card:hover::after{opacity:1}
+.kpi-card:nth-child(1)::after{background:linear-gradient(90deg,var(--primary),#0d9488,var(--primary))}
+.kpi-card:nth-child(2)::after{background:linear-gradient(90deg,var(--secondary),#818cf8,var(--secondary))}
+.kpi-card:nth-child(3)::after{background:linear-gradient(90deg,var(--warning),#f97316,var(--warning))}
+.kpi-card:nth-child(4)::after{background:linear-gradient(90deg,var(--success),#34d399,var(--success))}
+.kpi-card:nth-child(5)::after{background:linear-gradient(90deg,#0ea5e9,#06b6d4,#0ea5e9)}
+@keyframes gradientBorder{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
+/* ─── ENHANCED GLASS ─── */
+.glass{
+  background:rgba(17,24,39,0.6) !important;
+  backdrop-filter:blur(24px) !important;
+  -webkit-backdrop-filter:blur(24px) !important;
+  border-color:rgba(255,255,255,0.08) !important;
+}
+.glass-strong{
+  background:rgba(17,24,39,0.75) !important;
+  backdrop-filter:blur(32px) !important;
+  -webkit-backdrop-filter:blur(32px) !important;
+}
+
+/* ─── NEON GLOW ─── */
+.nav-item.active .nav-icon{
+  text-shadow:0 0 12px var(--primary-glow);
+}
+.nav-item.active{text-shadow:0 0 20px rgba(5,150,105,0.15)}
+
+/* ─── AI STATUS ORB ─── */
+.ai-orb{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(5,150,105,0.2),rgba(99,102,241,0.2));
+  border:1px solid rgba(5,150,105,0.3);
+  position:relative;margin-right:6px;
+}
+.ai-orb::before{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  border:1px solid rgba(5,150,105,0.15);
+  animation:orbPulse 2s ease-in-out infinite;
+}
+.ai-orb i{font-size:14px;color:var(--primary-light)}
+@keyframes orbPulse{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.2);opacity:0}}
+
+/* ─── FLOATING ORB ENHANCEMENT ─── */
+.orb-1{animation-duration:25s}
+.orb-2{animation-duration:20s;animation-delay:-5s}
+.orb-3{animation-duration:18s;animation-delay:-12s}
+
+/* ─── SIDEBAR GLOW LINE ─── */
+.sidebar::after{
+  content:'';position:absolute;top:0;right:-1px;bottom:0;width:1px;
+  background:linear-gradient(180deg,transparent,var(--primary),transparent);
+  opacity:0.15;
+}
+
+/* ─── CARD GLASS UPGRADE ─── */
+.card{background:rgba(17,24,39,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.kpi-card{background:rgba(17,24,39,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.ml-model-card{background:rgba(17,24,39,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.insight-card{background:rgba(17,24,39,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}

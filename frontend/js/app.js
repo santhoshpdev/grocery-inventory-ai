@@ -40,4 +40,36 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     console.error('Router not loaded');
   }
+
+  new ParticleNetwork('particle-canvas');
+
+  const glow = document.getElementById('mouse-glow');
+  if (glow) {
+    document.addEventListener('mousemove', (e) => {
+      glow.style.left = e.clientX + 'px';
+      glow.style.top = e.clientY + 'px';
+    });
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  function observeCards() {
+    document.querySelectorAll('.animate-fade').forEach(el => observer.unobserve(el));
+    document.querySelectorAll('.animate-fade').forEach(el => observer.observe(el));
+  }
+
+  const origHandleRoute = window.handleRoute;
+  if (origHandleRoute) {
+    const orig = origHandleRoute;
+    window.handleRoute = function() {
+      orig();
+      observeCards();
+    };
+  }
 });

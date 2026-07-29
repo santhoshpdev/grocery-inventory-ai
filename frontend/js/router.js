@@ -17,6 +17,36 @@ function getCurrentPage() {
   return hash && ROUTES[hash] ? hash : 'dashboard';
 }
 
+function typewriter(el, text, speed = 25) {
+  if (!el) return;
+  el.textContent = '';
+  el.classList.add('typewriter-cursor');
+  let i = 0;
+  function tick() {
+    if (i < text.length) {
+      el.textContent += text[i];
+      i++;
+      setTimeout(tick, speed);
+    } else {
+      el.classList.remove('typewriter-cursor');
+    }
+  }
+  tick();
+}
+
+function addAnimateFade(container) {
+  container.querySelectorAll('.card, .kpi-card, .ml-model-card, .insight-card, .summary-item, .detail-item').forEach((el, i) => {
+    el.classList.add('animate-fade');
+    const delay = Math.min((i % 8) + 1, 8);
+    el.classList.add('stagger-' + delay);
+  });
+  setTimeout(() => {
+    container.querySelectorAll('.animate-fade').forEach(el => {
+      el.classList.add('in-view');
+    });
+  }, 50);
+}
+
 function handleRoute() {
   const page = getCurrentPage();
   if (page === currentPage) return;
@@ -25,8 +55,11 @@ function handleRoute() {
   const route = ROUTES[page];
   const titleEl = document.getElementById('page-title');
   const subEl = document.getElementById('page-subtitle');
-  if (titleEl) titleEl.textContent = route.title;
-  if (subEl) subEl.textContent = route.subtitle;
+
+  if (titleEl) typewriter(titleEl, route.title, 20);
+  if (subEl) {
+    subEl.textContent = route.subtitle;
+  }
 
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.page === page);
@@ -45,6 +78,7 @@ function handleRoute() {
   setTimeout(() => {
     try {
       route.render(content);
+      addAnimateFade(content);
     } catch (e) {
       console.error('Render error:', e);
       content.innerHTML = `
