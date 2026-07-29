@@ -13,6 +13,7 @@ function renderMLInsights(container) {
         </div>
       </div>
       <div id="best-model" style="margin-top:16px"></div>
+      <div id="ml-description" style="margin-top:16px"></div>
     </div>
     <div class="card">
       <div class="card-header"><div><div class="card-title">Model Performance Comparison</div><div class="card-subtitle">Accuracy, Precision, Recall across all models</div></div></div>
@@ -39,6 +40,7 @@ async function loadMLData() {
       API.featureImportance(),
     ]);
     renderBestModel(metricsData.models);
+    renderMLDescription(metricsData.models, importanceData.features);
     safeChart(() => renderModelChart(metricsData.models));
     renderModelRankings(metricsData.models);
     safeChart(() => renderImportanceChart(importanceData.features));
@@ -57,6 +59,22 @@ function renderBestModel(models) {
         <div class="ml-model-metric">Accuracy: ${(best.accuracy*100).toFixed(2)}% • Precision: ${(best.precision*100).toFixed(2)}% • Recall: ${(best.recall*100).toFixed(2)}% • F1: ${(best.f1*100).toFixed(2)}% • ROC-AUC: ${best.roc_auc.toFixed(4)}</div>
       </div>
       <div class="ml-model-score">${(best.accuracy*100).toFixed(1)}%</div>
+    </div>
+  `;
+}
+
+function renderMLDescription(models, features) {
+  const best = models.reduce((a, b) => a.accuracy > b.accuracy ? a : b);
+  const top3 = features?.slice(0, 3).map(f => f.Feature).join(', ') || '';
+  document.getElementById('ml-description').innerHTML = `
+    <div class="ai-insight-card" style="margin-bottom:0">
+      <div class="ai-insight-icon" style="background:linear-gradient(135deg,var(--secondary),#818cf8)"><i class="fas fa-microchip"></i></div>
+      <div class="ai-insight-content">
+        <div class="ai-insight-title">How the Model Works</div>
+        <div class="ai-insight-text">
+          The <strong>${best.name}</strong> classifier was trained on 6,000 labeled inventory records with 18 features. It predicts stock status (Low Stock, Normal, Overstock) using gradient boosting with 200 trees. The top 3 most influential features are: <strong>${top3}</strong>. ${best.name} outperforms 6 other models with ${(best.accuracy*100).toFixed(1)}% accuracy and near-perfect ROC-AUC of ${best.roc_auc.toFixed(4)}.
+        </div>
+      </div>
     </div>
   `;
 }

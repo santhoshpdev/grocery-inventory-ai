@@ -1,4 +1,9 @@
+let searchTimeout = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  updateThemeIcon();
+
   new ParticleNetwork('particle-canvas');
 
   const glow = document.getElementById('mouse-glow');
@@ -8,6 +13,56 @@ document.addEventListener('DOMContentLoaded', () => {
       glow.style.top = e.clientY + 'px';
     });
   }
+
+  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+
+  const searchBtn = document.getElementById('search-btn');
+  const globalSearch = document.getElementById('global-search');
+  const searchInput = document.getElementById('global-search-input');
+  const searchResults = document.getElementById('global-search-results');
+
+  function openSearch() {
+    globalSearch?.classList.add('open');
+    setTimeout(() => searchInput?.focus(), 100);
+  }
+  window.closeSearch = function() {
+    globalSearch?.classList.remove('open');
+    if (searchResults) searchResults.innerHTML = '';
+  }
+
+  searchBtn?.addEventListener('click', openSearch);
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      globalSearch?.classList.contains('open') ? closeSearch() : openSearch();
+    }
+    if (e.key === 'Escape') closeSearch();
+  });
+
+  searchInput?.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const q = this.value.trim();
+    if (!q) { if (searchResults) searchResults.innerHTML = ''; return; }
+    searchTimeout = setTimeout(async () => {
+      try {
+        const data = await API.inventory({ search: q, per_page: 10 });
+        if (searchResults) {
+          if (!data || data.length === 0) {
+            searchResults.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text-muted);font-size:13px">No results found</div>';
+            return;
+          }
+          searchResults.innerHTML = data.map(r => `
+            <div class="global-search-result" onclick="closeSearch();navigateTo('inventory');document.getElementById('inv-search')?.value='${q.replace(/'/g, "\\'")}';loadInventory()">
+              <i class="fas fa-box" style="color:var(--primary-light);font-size:12px"></i>
+              <span>${r.product?.product_name || 'Unknown'}</span>
+              <span style="color:var(--text-muted);font-size:12px;margin-left:auto">${r.product?.category || ''} ${r.stock_status ? '<span class="badge badge-' + statusBadgeClass(r.stock_status) + '" style="font-size:10px">' + r.stock_status + '</span>' : ''}</span>
+            </div>
+          `).join('');
+        }
+      } catch (e) { /* ignore */ }
+    }, 300);
+  });
 
   const menuBtn = document.getElementById('mobile-menu-btn');
   const mobileNav = document.getElementById('mobile-nav');
@@ -69,12 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const origHandleRoute = window.handleRoute;
   if (origHandleRoute) {
-    const wrapped = function() {
-      origHandleRoute();
-      setTimeout(updateNavIndicator, 200);
-    };
-    window.handleRoute = wrapped;
-
     window.addEventListener('hashchange', () => {
       setTimeout(updateNavIndicator, 200);
     });

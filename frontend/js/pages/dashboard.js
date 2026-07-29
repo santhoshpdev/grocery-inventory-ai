@@ -3,7 +3,10 @@ let categoryChart = null;
 
 function renderDashboard(container) {
   container.innerHTML = `
+    <div id="dash-hero"></div>
+    <div id="dash-health"></div>
     <div class="kpi-grid" id="kpi-grid"></div>
+    <div id="dash-insight"></div>
     <div class="grid-2">
       <div class="card">
         <div class="card-header">
@@ -24,12 +27,13 @@ function renderDashboard(container) {
         <div class="chart-container"><canvas id="category-chart"></canvas></div>
       </div>
     </div>
+    <div id="dash-priority"></div>
     <div class="grid-2">
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">Recent Predictions</div>
-            <div class="card-subtitle">Latest AI status predictions</div>
+            <div class="card-title">Recent AI Predictions</div>
+            <div class="card-subtitle">Latest ML status predictions</div>
           </div>
         </div>
         <div id="recent-predictions">
@@ -55,9 +59,16 @@ function renderDashboard(container) {
 async function loadDashboardData() {
   try {
     const data = await API.dashboard();
-    renderKPI(data);
+    const total = data.low_stock_count + data.normal_stock_count + data.overstock_count;
+    const healthScore = total ? Math.round(((data.normal_stock_count + data.overstock_count * 0.5) / total) * 100) : 0;
+
+    renderHero(data, total, healthScore);
+    renderHealthScore(healthScore);
+    renderKPI(data, total);
+    renderAIInsight(data, total);
     safeChart(() => createStatusChart(data.status_distribution));
     safeChart(() => createCategoryChart(data.category_distribution));
+    renderPriority(data, total);
     renderRecentPredictions(data.recent_predictions);
     renderAlerts(data.recent_alerts);
   } catch (err) {
@@ -74,10 +85,76 @@ async function loadDashboardData() {
   }
 }
 
-function renderKPI(data) {
-  const total = data.low_stock_count + data.normal_stock_count + data.overstock_count;
-  const lowPct = total ? ((data.low_stock_count / total) * 100).toFixed(1) : 0;
+function renderHero(data, total, healthScore) {
+  const catLabels = data.category_distribution?.map(c => c.category).join(', ') || '';
+  document.getElementById('dash-hero').innerHTML = `
+    <div class="hero-section">
+      <div class="hero-content">
+        <div class="hero-title">Good <span id="dash-greeting"></span>, <span class="text-gradient">StockIntel AI</span></div>
+        <div class="hero-subtitle">Your AI-powered inventory intelligence system is active. Monitor stock health, run predictions, and explore ${data.total_records.toLocaleString()} inventory records across ${data.total_products} products.</div>
+        <div class="hero-stats">
+          <span class="hero-stat"><i class="fas fa-database"></i> <strong>${data.total_records.toLocaleString()}</strong> records</span>
+          <span class="hero-stat"><i class="fas fa-box"></i> <strong>${data.total_products}</strong> products</span>
+          <span class="hero-stat"><i class="fas fa-microchip"></i> <strong>99.17%</strong> CatBoost accuracy</span>
+          <span class="hero-stat"><i class="fas fa-tag"></i> ${catLabels}</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="health-score" id="health-score-ring">
+          <div class="health-score-text">
+            <div class="health-score-value" id="health-value">0</div>
+            <div class="health-score-label">Health</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+  document.getElementById('dash-greeting').textContent = greeting;
+}
 
+function renderHealthScore(score) {
+  const container = document.getElementById('health-score-ring');
+  if (!container) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = 100; canvas.height = 100;
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const cx = 50, cy = 50, r = 40, start = -Math.PI / 2;
+  const end = start + (Math.PI * 2 * Math.min(score / 100, 1));
+  ctx.clearRect(0, 0, 100, 100);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 6; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, r, start, end);
+  ctx.strokeStyle = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+  ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.stroke();
+  const valEl = document.getElementById('health-value');
+  if (valEl) animateCounter(valEl, score, '%');
+}
+
+function renderAIInsight(data, total) {
+  const lowPct = total ? ((data.low_stock_count / total) * 100).toFixed(1) : 0;
+  const normalPct = total ? ((data.normal_stock_count / total) * 100).toFixed(1) : 0;
+  const overPct = total ? ((data.overstock_count / total) * 100).toFixed(1) : 0;
+  const insight = lowPct > 20
+    ? `⚠️ ${lowPct}% of inventory is low stock — consider urgent replenishment. Focus on high-demand items with low shelf life.`
+    : overPct > 40
+    ? `📦 ${overPct}% of inventory is overstocked — consider promotions or reducing orders for slow-moving items.`
+    : `✅ Inventory is well-balanced: ${normalPct}% normal, ${overPct}% overstocked, ${lowPct}% low stock. CatBoost model is at 99.17% accuracy.`;
+
+  document.getElementById('dash-insight').innerHTML = `
+    <div class="ai-insight-card">
+      <div class="ai-insight-icon"><i class="fas fa-brain"></i></div>
+      <div class="ai-insight-content">
+        <div class="ai-insight-title"><i class="fas fa-lightbulb" style="color:#fbbf24;margin-right:6px"></i>AI Insight</div>
+        <div class="ai-insight-text">${insight}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderKPI(data, total) {
+  const lowPct = total ? ((data.low_stock_count / total) * 100).toFixed(1) : 0;
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi-card">
       <div class="kpi-icon green"><i class="fas fa-box"></i></div>
@@ -112,13 +189,49 @@ function renderKPI(data) {
       </div>
     </div>
   `;
-
   setTimeout(() => {
     animateCounter(document.getElementById('kpi-products'), data.total_products);
     animateCounter(document.getElementById('kpi-low'), data.low_stock_count);
     animateCounter(document.getElementById('kpi-normal'), data.normal_stock_count);
     animateCounter(document.getElementById('kpi-over'), data.overstock_count);
   }, 100);
+}
+
+function renderPriority(data, total) {
+  const alerts = data.recent_alerts?.slice(0, 5) || [];
+  const overstockCount = data.overstock_count || 0;
+  const normalCount = data.normal_stock_count || 0;
+  const lowCount = data.low_stock_count || 0;
+  const items = [];
+  if (alerts.length > 0) {
+    alerts.slice(0, 3).forEach(a => {
+      items.push({ icon: 'fa-exclamation', iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', name: a.product_name, meta: `Inventory: ${a.inventory_level} units`, badge: 'Low Stock', badgeClass: 'badge-danger' });
+    });
+  }
+  if (total) {
+    items.push({ icon: 'fa-chart-pie', iconBg: 'var(--warning-bg)', iconColor: 'var(--warning)', name: 'Stock Distribution', meta: `${lowCount} low · ${normalCount} normal · ${overstockCount} overstock`, badge: `${Math.round((lowCount/total)*100)}% Low`, badgeClass: lowCount/total > 0.2 ? 'badge-danger' : 'badge-warning' });
+  }
+  if (items.length === 0) return;
+  document.getElementById('dash-priority').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title"><i class="fas fa-bell" style="color:var(--warning);margin-right:6px"></i>Priority Attention</div>
+          <div class="card-subtitle">Items requiring immediate action</div>
+        </div>
+      </div>
+      ${items.map(item => `
+        <div class="priority-item">
+          <div class="priority-icon" style="background:${item.iconBg};color:${item.iconColor}"><i class="fas ${item.icon}"></i></div>
+          <div class="priority-info">
+            <div class="priority-name">${item.name}</div>
+            <div class="priority-meta">${item.meta}</div>
+          </div>
+          <span class="badge ${item.badgeClass} priority-badge">${item.badge}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 function createStatusChart(distribution) {

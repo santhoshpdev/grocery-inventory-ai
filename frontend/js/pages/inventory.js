@@ -1,4 +1,5 @@
 let invPage = 1;
+let lastInvData = null;
 
 function renderInventory(container) {
   container.innerHTML = `
@@ -19,7 +20,9 @@ function renderInventory(container) {
           <option value="Normal">Normal</option>
           <option value="Overstock">Overstock</option>
         </select>
+        <button class="export-btn" id="inv-export-btn" onclick="exportInvCSV()" title="Export CSV"><i class="fas fa-download"></i> CSV</button>
       </div>
+      <div id="inv-filter-summary"></div>
       <div id="inv-table"><div class="loading-screen" style="min-height:200px"><div class="loader-ring"></div></div></div>
       <div class="pagination" id="inv-pagination" style="display:none">
         <span id="inv-info"></span>
@@ -43,6 +46,32 @@ function renderInventory(container) {
   loadInventory();
 }
 
+function exportInvCSV() {
+  if (!lastInvData || lastInvData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+  const flat = lastInvData.map(r => ({
+    Product: r.product?.product_name || 'Unknown',
+    Category: r.product?.category || '',
+    Inventory_Level: r.inventory_level,
+    Units_Sold: r.units_sold,
+    Unit_Price: r.unit_price,
+    Purchase_Cost: r.purchase_cost,
+    Discount: r.discount,
+    Temperature: r.temperature,
+    Holiday: r.holiday ? 'Yes' : 'No',
+    Promotion: r.promotion ? 'Yes' : 'No',
+    Lead_Time: r.lead_time,
+    Shelf_Life: r.shelf_life,
+    Reorder_Level: r.reorder_level,
+    Demand: r.demand,
+    Stock_Status: r.stock_status,
+  }));
+  exportCSV(flat, 'inventory-export.csv');
+  showToast('CSV exported successfully', 'success');
+}
+
 async function loadInventory() {
   const search = document.getElementById('inv-search').value;
   const category = document.getElementById('inv-category').value;
@@ -54,6 +83,8 @@ async function loadInventory() {
 
   try {
     const data = await API.inventory(params);
+    lastInvData = data;
+    renderInvFilterSummary(search, category, status);
     renderInvTable(data);
   } catch (err) {
     document.getElementById('inv-table').innerHTML = `
@@ -65,6 +96,19 @@ async function loadInventory() {
       </div>
     `;
   }
+}
+
+function renderInvFilterSummary(search, category, status) {
+  const el = document.getElementById('inv-filter-summary');
+  if (!search && !category && !status) {
+    el.innerHTML = '';
+    return;
+  }
+  const parts = [];
+  if (search) parts.push(`<span class="filter-pill">"${search}" <i class="fas fa-times" onclick="document.getElementById('inv-search').value='';invPage=1;loadInventory()"></i></span>`);
+  if (category) parts.push(`<span class="filter-pill">${category} <i class="fas fa-times" onclick="document.getElementById('inv-category').value='';invPage=1;loadInventory()"></i></span>`);
+  if (status) parts.push(`<span class="filter-pill">${status} <i class="fas fa-times" onclick="document.getElementById('inv-status').value='';invPage=1;loadInventory()"></i></span>`);
+  el.innerHTML = `<div class="filter-summary">Filters: ${parts.join(' ')}</div>`;
 }
 
 function renderInvTable(records) {

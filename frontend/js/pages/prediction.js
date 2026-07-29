@@ -1,3 +1,5 @@
+let predictionHistoryData = null;
+
 function renderPrediction(container) {
   const savedId = localStorage.getItem('predict_product_id') || '';
   localStorage.removeItem('predict_product_id');
@@ -16,30 +18,43 @@ function renderPrediction(container) {
     </div>
 
     <div class="card">
-      <div style="margin-bottom:20px">
+      <div style="margin-bottom:16px">
         <div class="card-title" style="font-size:18px"><i class="fas fa-sliders-h" style="margin-right:8px;color:var(--primary)"></i>Input Features</div>
         <div class="card-subtitle" style="font-size:12px">All 18 fields are required by the ML model</div>
       </div>
       <form id="predict-form" onsubmit="submitPrediction(event)">
-        <div class="form-grid">
-          <div class="form-group"><label>Product ID</label><input type="number" name="product_id" value="${savedId}" required /></div>
-          <div class="form-group"><label>Product Name</label><input type="text" name="product_name" placeholder="e.g. Product_001" required /></div>
-          <div class="form-group"><label>Store ID</label><select name="store_id" required>${Array.from({length:10},(_,i)=>`<option value="${i+1}">Store ${i+1}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Category</label><select name="category" required><option value="">Select...</option>${['Bakery','Beverages','Dairy','Frozen','Fruits','Grains','Household','Meat','Snacks','Vegetables'].map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Supplier</label><select name="supplier" required><option value="">Select...</option>${Array.from({length:15},(_,i)=>`<option value="Supplier_${i+1}">Supplier_${i+1}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Season</label><select name="season" required><option value="">Select...</option>${['Rainy','Spring','Summer','Winter'].map(s=>`<option value="${s}">${s}</option>`).join('')}</select></div>
-          <div class="form-group"><label>Inventory Level</label><input type="number" name="inventory_level" min="30" max="600" placeholder="30-600" required /></div>
-          <div class="form-group"><label>Units Sold</label><input type="number" name="units_sold" min="1" max="100" placeholder="1-100" required /></div>
-          <div class="form-group"><label>Unit Price ($)</label><input type="number" step="0.01" name="unit_price" min="0" placeholder="0.00" required /></div>
-          <div class="form-group"><label>Purchase Cost ($)</label><input type="number" step="0.01" name="purchase_cost" min="0" placeholder="0.00" required /></div>
-          <div class="form-group"><label>Discount (%)</label><input type="number" name="discount" min="0" max="25" placeholder="0-25" required /></div>
-          <div class="form-group"><label>Temperature</label><input type="number" step="0.1" name="temperature" placeholder="15.0-40.0" required /></div>
-          <div class="form-group"><label>Holiday</label><select name="holiday" required><option value="0">No</option><option value="1">Yes</option></select></div>
-          <div class="form-group"><label>Promotion</label><select name="promotion" required><option value="0">No</option><option value="1">Yes</option></select></div>
-          <div class="form-group"><label>Lead Time (days)</label><input type="number" name="lead_time" min="1" max="10" placeholder="1-10" required /></div>
-          <div class="form-group"><label>Shelf Life (days)</label><input type="number" name="shelf_life" min="3" max="365" placeholder="3-365" required /></div>
-          <div class="form-group"><label>Reorder Level</label><input type="number" name="reorder_level" min="40" max="150" placeholder="40-150" required /></div>
-          <div class="form-group"><label>Demand</label><input type="number" name="demand" min="1" max="112" placeholder="1-112" required /></div>
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-tag"></i> Product Information</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Product ID</label><input type="number" name="product_id" value="${savedId}" required /></div>
+            <div class="form-group"><label>Product Name</label><input type="text" name="product_name" placeholder="e.g. Product_001" required /></div>
+            <div class="form-group"><label>Store ID</label><select name="store_id" required>${Array.from({length:10},(_,i)=>`<option value="${i+1}">Store ${i+1}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Category</label><select name="category" required><option value="">Select...</option>${['Bakery','Beverages','Dairy','Frozen','Fruits','Grains','Household','Meat','Snacks','Vegetables'].map(c=>`<option value="${c}">${c}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Supplier</label><select name="supplier" required><option value="">Select...</option>${Array.from({length:15},(_,i)=>`<option value="Supplier_${i+1}">Supplier_${i+1}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Season</label><select name="season" required><option value="">Select...</option>${['Rainy','Spring','Summer','Winter'].map(s=>`<option value="${s}">${s}</option>`).join('')}</select></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-chart-bar"></i> Inventory Metrics</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Inventory Level</label><input type="number" name="inventory_level" min="30" max="600" placeholder="30-600" required /></div>
+            <div class="form-group"><label>Units Sold</label><input type="number" name="units_sold" min="1" max="100" placeholder="1-100" required /></div>
+            <div class="form-group"><label>Unit Price ($)</label><input type="number" step="0.01" name="unit_price" min="0" placeholder="0.00" required /></div>
+            <div class="form-group"><label>Purchase Cost ($)</label><input type="number" step="0.01" name="purchase_cost" min="0" placeholder="0.00" required /></div>
+            <div class="form-group"><label>Discount (%)</label><input type="number" name="discount" min="0" max="25" placeholder="0-25" required /></div>
+            <div class="form-group"><label>Temperature</label><input type="number" step="0.1" name="temperature" placeholder="15.0-40.0" required /></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-clock"></i> Time & Logistics</div>
+          <div class="form-grid">
+            <div class="form-group"><label>Holiday</label><select name="holiday" required><option value="0">No</option><option value="1">Yes</option></select></div>
+            <div class="form-group"><label>Promotion</label><select name="promotion" required><option value="0">No</option><option value="1">Yes</option></select></div>
+            <div class="form-group"><label>Lead Time (days)</label><input type="number" name="lead_time" min="1" max="10" placeholder="1-10" required /></div>
+            <div class="form-group"><label>Shelf Life (days)</label><input type="number" name="shelf_life" min="3" max="365" placeholder="3-365" required /></div>
+            <div class="form-group"><label>Reorder Level</label><input type="number" name="reorder_level" min="40" max="150" placeholder="40-150" required /></div>
+            <div class="form-group"><label>Demand</label><input type="number" name="demand" min="1" max="112" placeholder="1-112" required /></div>
+          </div>
         </div>
         <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
           <button type="submit" class="btn btn-primary" id="predict-btn" style="padding:13px 28px">
@@ -55,7 +70,46 @@ function renderPrediction(container) {
       </form>
     </div>
     <div id="prediction-result"></div>
+    <div class="card" id="prediction-history-card" style="display:none">
+      <div class="prediction-history-header">
+        <div class="prediction-history-title"><i class="fas fa-history"></i> Recent Prediction History</div>
+      </div>
+      <div id="prediction-history-list"></div>
+    </div>
   `;
+  loadPredictionHistory();
+}
+
+async function loadPredictionHistory() {
+  try {
+    const data = await API.predictions({ per_page: 5 });
+    if (data && data.predictions && data.predictions.length > 0) {
+      predictionHistoryData = data.predictions;
+      const card = document.getElementById('prediction-history-card');
+      const list = document.getElementById('prediction-history-list');
+      if (card) card.style.display = 'block';
+      if (list) {
+        list.innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead><tr><th>ID</th><th>Status</th><th>Confidence</th><th>Model</th><th>Time</th></tr></thead>
+              <tbody>
+                ${data.predictions.slice(0, 5).map(p => `
+                  <tr>
+                    <td style="font-weight:600">#${p.id}</td>
+                    <td><span class="badge badge-${statusBadgeClass(p.predicted_status)}">${p.predicted_status}</span></td>
+                    <td style="font-weight:600">${(p.confidence * 100).toFixed(1)}%</td>
+                    <td style="font-size:12px;color:var(--text-muted)">${p.model_name}</td>
+                    <td style="color:var(--text-muted);font-size:12px">${new Date(p.created_at).toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+    }
+  } catch (e) { /* history is optional */ }
 }
 
 async function submitPrediction(event) {
@@ -84,6 +138,7 @@ async function submitPrediction(event) {
     const result = await API.predict(data);
     displayResult(result);
     showToast('Prediction completed successfully', 'success');
+    loadPredictionHistory();
   } catch (err) {
     document.getElementById('prediction-result').innerHTML = `
       <div class="card" style="border-color:rgba(239,68,68,0.3);text-align:center;padding:32px">

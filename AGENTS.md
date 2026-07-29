@@ -265,18 +265,22 @@ hashchange → handleRoute()
 
 ### Page Scripts (in `pages/`)
 Each page script defines a global `render<Page>(container)` function:
-- **dashboard.js**: `renderDashboard()` — KPI grid, Chart.js donut + bar, recent predictions list, low-stock alerts
-- **inventory.js**: `renderInventory()` — search input, status/category filters, table, pagination, detail modal
-- **prediction.js**: `renderPrediction()` — 18-field form, submit → API call → animated result card with confidence bars
-- **analytics.js**: `renderAnalytics()` — insight cards, Chart.js doughnut (status) + horizontal bar (category), summary grid
-- **ml-insights.js**: `renderMLInsights()` — model ranking cards, comparison bar chart, feature importance horizontal bars
+- **dashboard.js**: `renderDashboard()` — hero section with greeting + health score ring, KPI grid, AI insight card, Chart.js donut + bar, priority attention list, recent predictions, low-stock alerts
+- **inventory.js**: `renderInventory()` — search + category/status filters, smart filter summary pills, table with pagination, CSV export, detail modal with "Run AI Prediction" link
+- **prediction.js**: `renderPrediction()` — organized form in 3 sections (Product Info / Inventory Metrics / Time & Logistics), submit → API call → animated result card with confidence bars + recommendation, prediction history table
+- **analytics.js**: `renderAnalytics()` — insight cards, Chart.js doughnut (status) + horizontal bar (category) + stacked bar (status×category), summary grid
+- **ml-insights.js**: `renderMLInsights()` — model hero card, "how it works" explanation, comparison bar chart, ranked model list, feature importance horizontal bars
 
 ### Global Utilities (`utils.js`)
 - `showToast(message, type)` — animated toast notification (success/error/info)
 - `safeChart(callback, maxRetries=20, interval=500)` — waits for Chart.js to load, then calls callback
-- `debounce(fn, delay)` — standard debounce
-- `animateCounter(el, target, duration)` — number counter animation
+- `debounce(fn, ms)` — standard debounce
+- `animateCounter(el, target, duration, suffix)` — number counter animation
 - `statusBadgeClass(status)` — maps "Low Stock"→"danger", "Normal"→"success", "Overstock"→"warning"
+- `initTheme()` — loads saved theme from localStorage on startup
+- `toggleTheme()` — toggles light/dark mode, saves to localStorage
+- `updateThemeIcon()` — updates theme toggle button icon
+- `exportCSV(records, filename)` — creates and downloads CSV from array of objects
 
 ### API Client (`api.js`)
 - Singleton `API` object with methods: `health()`, `dashboard()`, `products(params)`, `product(id)`, `inventory(params)`, `predict(data)`, `predictions(limit)`, `mlMetrics()`, `featureImportance()`
@@ -425,13 +429,24 @@ ROC AUC  : 0.9990
 - Fixed top, 64px height
 - Glass background (blur 24px)
 - Center: nav links in a subtle pill container with sliding green indicator
-- Right: ML status badge + clock
+- Right: search button (Ctrl+K) → global search overlay, theme toggle (light/dark), ML status badge, clock
 - Mobile: hamburger → slide-down glass menu
+
+### Theme Toggle
+- Sun/moon icon button in navbar
+- Toggles CSS `[data-theme="light"]` on `<html>`, overrides all CSS variables for light mode
+- Persists choice in `localStorage('theme')`
+- Navbar/modal backgrounds, form inputs, scan-lines all adjust for light mode
+
+### Global Search
+- Ctrl+K or click search icon → opens overlay below navbar
+- Live search products by name via `/api/inventory?search=`
+- Shows product name, category, stock status badge per result
+- Click result → closes search, navigates to Inventory page, pre-fills search input
 
 ### Page Header
 - Title with typewriter animation
 - Subtitle (static)
-- Animated orb decoration
 
 ### KPI Cards
 - Glass background, 3D tilt on mouse move (`perspective(800px) rotateX/Y`)
@@ -576,9 +591,19 @@ curl -X POST http://localhost:8080/api/predict \
 
 ---
 
-## 15. File Change History (UI Overhaul)
+## 15. File Change History
 
-The frontend underwent a major redesign (commit `df75f25`):
+### Latest — Premium Ideathon UI Transformation
+- **Theme toggle**: Light/dark mode with `[data-theme="light"]` CSS variables override, persisted in localStorage
+- **Global search**: Ctrl+K overlay, live product search across all records
+- **Dashboard hero**: Greeting card with time-of-day awareness, animated health score ring, AI insight panel, priority attention list
+- **Inventory CSV export**: `exportCSV()` utility, filter summary pills with removable chips
+- **Prediction form sections**: Organized into 3 collapsible sections (Product → Metrics → Logistics), prediction history table below result
+- **Analytics stacked chart**: Status×Category stacked bar chart alongside existing donut + horizontal bar
+- **ML Insights explanation**: "How the Model Works" card explaining CatBoost pipeline with top features
+- **All pages**: Enhanced empty/error states, richer layouts, micro-interactions
+
+### Previous — UI Overhaul (commit `df75f25`)
 - **Layout**: Left sidebar → floating glass top navbar
 - **Background**: Static gradient orbs → animated aurora blobs + particle network
 - **Cards**: Flat dark → 3D tilt glassmorphism with backdrop blur
@@ -589,6 +614,6 @@ The frontend underwent a major redesign (commit `df75f25`):
 - **Interactions**: Basic hover → 3D tilt, ripple click, mouse glow
 - **Responsive**: Desktop-only → full mobile support with hamburger menu
 
-Previous commits:
+### Previous Commits
 - `5b7baf6` — Added particle network, mouse glow, typewriter, stagger, glassmorphism
 - `8b951cd` — Initial commit: full project scaffold

@@ -61,6 +61,12 @@
         <div class="nav-indicator" id="nav-indicator"></div>
       </div>
       <div class="nav-right">
+        <button class="nav-search-btn" id="search-btn" title="Search products (Ctrl+K)">
+          <i class="fas fa-search"></i>
+        </button>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+          <i class="fas fa-sun"></i>
+        </button>
         <div class="nav-status" id="ml-status">
           <div class="nl-status-dot"></div>
           <span>CatBoost</span>
@@ -69,6 +75,10 @@
         <button class="nav-mobile-btn" id="mobile-menu-btn">
           <i class="fas fa-bars"></i>
         </button>
+      </div>
+      <div class="global-search-overlay" id="global-search">
+        <input type="text" class="global-search-input" id="global-search-input" placeholder="Search products by name, category, or status... (Esc to close)" autocomplete="off" />
+        <div class="global-search-results" id="global-search-results"></div>
       </div>
     </div>
     <div class="mobile-nav" id="mobile-nav">
