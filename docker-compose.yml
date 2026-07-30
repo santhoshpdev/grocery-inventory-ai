@@ -19,8 +19,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/grocery_ai
       MODEL_DIR: /app/backend/ml_models
@@ -33,7 +33,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "7070:80"
     depends_on:
       - backend
 

@@ -28,6 +28,7 @@ function renderDashboard(container) {
       </div>
     </div>
     <div id="dash-priority"></div>
+    <div id="dash-forecast-overview"></div>
     <div class="grid-2">
       <div class="card">
         <div class="card-header">
@@ -69,6 +70,7 @@ async function loadDashboardData() {
     safeChart(() => createStatusChart(data.status_distribution));
     safeChart(() => createCategoryChart(data.category_distribution));
     renderPriority(data, total);
+    renderForecastOverview();
     renderRecentPredictions(data.recent_predictions);
     renderAlerts(data.recent_alerts);
   } catch (err) {
@@ -307,6 +309,60 @@ function renderRecentPredictions(predictions) {
       </table>
     </div>
   `;
+}
+
+async function renderForecastOverview() {
+  const el = document.getElementById('dash-forecast-overview');
+  if (!el) return;
+  try {
+    const overview = await API.forecastOverview();
+    if (!overview || overview.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
+    const increasing = overview.filter(o => o.summary?.trend === 'Increasing');
+    const decreasing = overview.filter(o => o.summary?.trend === 'Decreasing');
+    const highest = overview.reduce((a, b) => (a.summary?.average_forecast || 0) > (b.summary?.average_forecast || 0) ? a : b, overview[0]);
+
+    el.innerHTML = `
+      <div class="card" style="margin-top:4px">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="fas fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Forecast Overview</div>
+            <div class="card-subtitle">Demand trends from synthetic historical data</div>
+          </div>
+          <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="navigateTo('forecasting')">
+            <i class="fas fa-external-link-alt"></i> Open Forecasting
+          </button>
+        </div>
+        <div class="forecast-overview-grid">
+          <div class="forecast-overview-item">
+            <div class="forecast-overview-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-arrow-trend-up"></i></div>
+            <div>
+              <div class="forecast-overview-value">${increasing.length}</div>
+              <div class="forecast-overview-label">Products with Increasing Demand</div>
+            </div>
+          </div>
+          <div class="forecast-overview-item">
+            <div class="forecast-overview-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-arrow-trend-down"></i></div>
+            <div>
+              <div class="forecast-overview-value">${decreasing.length}</div>
+              <div class="forecast-overview-label">Products with Decreasing Demand</div>
+            </div>
+          </div>
+          <div class="forecast-overview-item">
+            <div class="forecast-overview-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="fas fa-trophy"></i></div>
+            <div>
+              <div class="forecast-overview-value">${highest.summary?.average_forecast || '—'}</div>
+              <div class="forecast-overview-label">Highest Forecasted Demand (units/day)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (e) {
+    el.innerHTML = '';
+  }
 }
 
 function renderAlerts(alerts) {

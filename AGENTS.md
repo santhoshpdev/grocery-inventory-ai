@@ -59,7 +59,7 @@ data/dataset.csv  (6,000 rows, 18 features, shipped in repo)
 │  ┌──────────────┐    ┌──────────────┐    ┌────────────┐  │
 │  │   Frontend    │    │   Backend     │    │ PostgreSQL │  │
 │  │   Nginx       │◀──▶│   FastAPI     │◀──▶│   :5432    │  │
-│  │   :8080       │    │   :8000       │    │            │  │
+│  │   :7070       │    │   :8000       │    │            │  │
 │  │               │    │               │    │ grocery_ai │  │
 │  │  SPA (static) │    │  CatBoost ML  │    │            │  │
 │  └──────────────┘    └──────────────┘    └────────────┘  │
@@ -81,7 +81,7 @@ postgres (healthy) → backend (starts) → frontend (starts after backend)
 - All services on a shared Docker bridge network
 - Backend accessible internally at `backend:8000`
 - Frontend proxied: `/api/*` → `http://backend:8000/api/*`
-- Frontend served externally at `http://localhost:8080`
+- Frontend served externally at `http://localhost:7070`
 
 ---
 
@@ -468,7 +468,7 @@ ROC AUC  : 0.9990
 services:
   postgres:     # postgres:15-alpine, port 5432 (internal), named volume
   backend:      # build from ./backend/Dockerfile, port 8000
-  frontend:     # build from ./frontend/Dockerfile, port 8080
+  frontend:     # build from ./frontend/Dockerfile, port 7070
 ```
 
 ### Backend Dockerfile
@@ -520,7 +520,7 @@ server {
    c. If products table empty: `seed_data()` reads CSV → inserts 200 Products + 6,000 InventoryRecords
    d. `ml_service.load()` — loads CatBoost model + artifacts from disk
 5. Frontend container starts (Nginx, no dependency wait)
-6. User opens http://localhost:8080
+6. User opens http://localhost:7070
 7. Frontend JS calls `/api/health` → confirms ML loaded
 8. Default route `#dashboard` renders
 
@@ -564,7 +564,7 @@ server {
 git clone <repo-url>
 cd grocery-inventory-ai
 docker compose up --build
-# Open http://localhost:8080
+# Open http://localhost:7070
 ```
 
 ### Environment Variables
@@ -578,13 +578,13 @@ MODEL_DIR=/app/backend/ml_models
 ### Data Flow Verification
 ```bash
 # Check API health
-curl http://localhost:8080/api/health
+curl http://localhost:7070/api/health
 
 # Check dashboard data
-curl http://localhost:8080/api/dashboard | python3 -m json.tool
+curl http://localhost:7070/api/dashboard | python3 -m json.tool
 
 # Make a prediction
-curl -X POST http://localhost:8080/api/predict \
+curl -X POST http://localhost:7070/api/predict \
   -H "Content-Type: application/json" \
   -d '{"product_id":1,"product_name":"Product_001","category":"Meat","supplier":"Supplier_6","store_id":5,"inventory_level":272,"units_sold":16,"unit_price":40.98,"purchase_cost":25.39,"discount":5,"temperature":28.3,"holiday":0,"promotion":1,"lead_time":1,"shelf_life":47,"reorder_level":78,"season":"Winter","demand":24}'
 ```

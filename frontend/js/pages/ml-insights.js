@@ -44,6 +44,7 @@ async function loadMLData() {
     safeChart(() => renderModelChart(metricsData.models));
     renderModelRankings(metricsData.models);
     safeChart(() => renderImportanceChart(importanceData.features));
+    renderForecastMetrics();
   } catch (err) {
     showToast('Failed to load ML insights: ' + err.message, 'error');
   }
@@ -117,6 +118,47 @@ function renderModelRankings(models) {
       <div class="ml-model-score">${(m.accuracy*100).toFixed(1)}%</div>
     </div>
   `).join('');
+}
+
+async function renderForecastMetrics() {
+  const container = document.getElementById('model-rankings');
+  if (!container) return;
+
+  const forecastSection = document.createElement('div');
+  forecastSection.id = 'forecast-metrics-section';
+  forecastSection.style.marginTop = '32px';
+  forecastSection.innerHTML = `
+    <div class="card" style="border-color:rgba(59,130,246,0.2)">
+      <div class="card-header">
+        <div>
+          <div class="card-title"><i class="fas fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Forecasting Model</div>
+          <div class="card-subtitle">Time-series demand forecasting using synthetic historical data</div>
+        </div>
+      </div>
+      <div class="ml-model-card" style="border-color:rgba(59,130,246,0.2)">
+        <div class="ml-model-rank" style="background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:14px"><i class="fas fa-chart-simple"></i></div>
+        <div class="ml-model-info">
+          <div class="ml-model-name">Holt-Winters Exponential Smoothing <span style="font-size:11px;color:#3b82f6;font-weight:600;margin-left:8px">DEMAND FORECAST</span></div>
+          <div class="ml-model-metric">
+            Task: Future Demand Prediction &bull;
+            Data: Synthetic Historical Demand &bull;
+            Seasonality: Weekly (7-day pattern) &bull;
+            Trend: Additive
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px;background:var(--bg-elevated);border-radius:var(--radius-xs);margin-top:12px;border:1px solid var(--border)">
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div><span style="color:var(--text-muted);font-size:12px">Model Type</span><div style="font-weight:600;font-size:14px;margin-top:2px">Holt-Winters</div></div>
+          <div><span style="color:var(--text-muted);font-size:12px">Training Data</span><div style="font-weight:600;font-size:14px;margin-top:2px">9,000 synthetic records</div></div>
+          <div><span style="color:var(--text-muted);font-size:12px">Products</span><div style="font-weight:600;font-size:14px;margin-top:2px">200 products</div></div>
+          <div><span style="color:var(--text-muted);font-size:12px">History per Product</span><div style="font-weight:600;font-size:14px;margin-top:2px">90 days</div></div>
+          <div><span style="color:var(--text-muted);font-size:12px">Evaluation</span><div style="font-weight:600;font-size:14px;margin-top:2px">Chronological 80/20 split</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+  container.parentNode.insertBefore(forecastSection, container.nextSibling);
 }
 
 function renderImportanceChart(features) {

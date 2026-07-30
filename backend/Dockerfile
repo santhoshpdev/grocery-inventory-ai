@@ -16,6 +16,7 @@ COPY data/ ./data/
 RUN mkdir -p /app/backend/ml_models
 
 RUN python backend/scripts/train_model.py
+RUN python backend/scripts/generate_synthetic_demand.py
 
 EXPOSE 8000
 

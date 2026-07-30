@@ -1,0 +1,23 @@
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.services.chat_service import ChatService
+
+router = APIRouter(prefix="/api", tags=["chat"])
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    message: str
+    intent: str
+
+
+@router.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest, db: Session = Depends(get_db)):
+    service = ChatService(db)
+    return service.process_message(request.message)

@@ -10,7 +10,7 @@ cd grocery-inventory-ai
 docker compose up --build
 ```
 
-Open **http://localhost:8080** in your browser.
+Open **http://localhost:7070** in your browser.
 
 ## Architecture
 

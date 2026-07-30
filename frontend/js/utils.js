@@ -60,8 +60,9 @@ function statusBadgeClass(status) {
 
 function initTheme() {
   const saved = localStorage.getItem('theme');
-  if (saved === 'light') {
+  if (saved === 'light' || !saved) {
     document.documentElement.setAttribute('data-theme', 'light');
+    if (!saved) localStorage.setItem('theme', 'light');
   }
 }
 

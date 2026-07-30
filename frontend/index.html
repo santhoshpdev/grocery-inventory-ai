@@ -49,6 +49,10 @@
             <i class="fas fa-brain nav-link-icon"></i>
             <span>AI Prediction</span>
           </a>
+          <a href="#forecasting" class="nav-link" data-page="forecasting">
+            <i class="fas fa-chart-bar nav-link-icon"></i>
+            <span>Forecasting</span>
+          </a>
           <a href="#analytics" class="nav-link" data-page="analytics">
             <i class="fas fa-chart-line nav-link-icon"></i>
             <span>Analytics</span>
@@ -91,6 +95,9 @@
       <a href="#prediction" class="mobile-nav-link" data-page="prediction">
         <i class="fas fa-brain"></i><span>AI Prediction</span>
       </a>
+      <a href="#forecasting" class="mobile-nav-link" data-page="forecasting">
+        <i class="fas fa-chart-bar"></i><span>Forecasting</span>
+      </a>
       <a href="#analytics" class="mobile-nav-link" data-page="analytics">
         <i class="fas fa-chart-line"></i><span>Analytics</span>
       </a>
@@ -126,12 +133,42 @@
 
   <div class="toast-container" id="toast-container"></div>
 
+  <div class="chat-widget" id="chat-widget">
+    <div class="chat-panel" id="chat-panel">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="chat-avatar"><i class="fas fa-robot"></i></div>
+          <div>
+            <div class="chat-title">Inventory AI</div>
+            <div class="chat-status">● Online</div>
+          </div>
+        </div>
+        <button class="chat-close" onclick="toggleChat()">&times;</button>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg assistant">
+          <div class="chat-msg-content">Hello! I'm your inventory assistant. Ask me anything about stock levels, predictions, or ML insights.</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Ask about inventory..." autocomplete="off" />
+        <button class="chat-send" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+    <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">
+      <div class="chat-toggle-pulse"></div>
+      <i class="fas fa-robot"></i>
+    </button>
+  </div>
+
   <script src="js/utils.js"></script>
   <script src="js/particles.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/chat.js"></script>
   <script src="js/pages/dashboard.js"></script>
   <script src="js/pages/inventory.js"></script>
   <script src="js/pages/prediction.js"></script>
+  <script src="js/pages/forecasting.js"></script>
   <script src="js/pages/analytics.js"></script>
   <script src="js/pages/ml-insights.js"></script>
   <script src="js/router.js"></script>

@@ -5,8 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.routes import dashboard, products, prediction, ml
+from app.routes import dashboard, products, prediction, ml, chat, forecast
 from app.services.ml_service import ml_service
+from app.services.forecasting_service import forecasting_service
 
 
 def wait_for_db(max_retries=30, delay=2):
@@ -102,6 +103,7 @@ def seed_data(db):
 async def lifespan(app: FastAPI):
     init_db()
     ml_service.load()
+    forecasting_service.load()
     yield
 
 
@@ -124,3 +126,5 @@ app.include_router(dashboard.router)
 app.include_router(products.router)
 app.include_router(prediction.router)
 app.include_router(ml.router)
+app.include_router(chat.router)
+app.include_router(forecast.router)

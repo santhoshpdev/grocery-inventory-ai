@@ -190,6 +190,9 @@ async function showDetail(productId) {
         <button class="btn btn-primary" onclick="navigateToPrediction(${data.product_id})">
           <i class="fas fa-brain"></i> Run AI Prediction
         </button>
+        <button class="btn btn-primary" style="background:linear-gradient(135deg,#3b82f6,#6366f1)" onclick="navigateToForecast(${data.product_id})">
+          <i class="fas fa-chart-line"></i> View Forecast
+        </button>
         <button class="btn btn-outline" onclick="document.getElementById('detail-modal').classList.remove('open')">
           <i class="fas fa-times"></i> Close
         </button>
@@ -204,4 +207,10 @@ function navigateToPrediction(id) {
   document.getElementById('detail-modal')?.classList.remove('open');
   localStorage.setItem('predict_product_id', id);
   navigateTo('prediction');
+}
+
+function navigateToForecast(id) {
+  document.getElementById('detail-modal')?.classList.remove('open');
+  localStorage.setItem('forecast_product_id', id);
+  navigateTo('forecasting');
 }

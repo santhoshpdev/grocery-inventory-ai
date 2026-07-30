@@ -165,4 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
       el.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0)';
     });
   });
+
+  handleRoute();
 });

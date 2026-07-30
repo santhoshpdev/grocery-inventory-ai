@@ -105,3 +105,26 @@ class MetricsOut(BaseModel):
 
 class FeatureImportanceOut(BaseModel):
     features: List[dict]
+
+
+class ForecastRequest(BaseModel):
+    product_id: int
+    horizon: int = Field(default=7, ge=1, le=30)
+
+
+class ForecastSummary(BaseModel):
+    average_forecast: int
+    peak_forecast: int
+    trend: str
+
+
+class ForecastResponse(BaseModel):
+    product_id: int
+    forecast_horizon: int
+    model: str
+    historical: List[dict]
+    forecast: List[dict]
+    summary: ForecastSummary
+    current_stock_status: Optional[str] = None
+    current_inventory_level: Optional[int] = None
+    recommendation: Optional[str] = None

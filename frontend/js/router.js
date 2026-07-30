@@ -2,6 +2,7 @@ const ROUTES = {
   dashboard: { title: 'Dashboard', subtitle: 'AI-Powered Inventory Overview', render: renderDashboard },
   inventory: { title: 'Inventory', subtitle: 'Browse and Manage Products', render: renderInventory },
   prediction: { title: 'AI Prediction', subtitle: 'ML-Powered Stock Status Classification', render: renderPrediction },
+  forecasting: { title: 'Demand Forecasting', subtitle: 'Historical Demand Analysis & Future Demand Estimation', render: renderForecasting },
   analytics: { title: 'Analytics & Insights', subtitle: 'Data-Driven Inventory Intelligence', render: renderAnalytics },
   'ml-insights': { title: 'ML Insights', subtitle: 'Model Performance & Explainability', render: renderMLInsights },
 };

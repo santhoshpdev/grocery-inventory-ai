@@ -45,4 +45,10 @@ const API = {
   analytics: () => apiFetch('/analytics'),
   metrics: () => apiFetch('/ml/metrics'),
   featureImportance: () => apiFetch('/ml/feature-importance'),
+  forecastProducts: () => apiFetch('/forecast/products'),
+  forecast: (data) => apiFetch('/forecast', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  forecastOverview: () => apiFetch('/forecast/overview'),
 };
