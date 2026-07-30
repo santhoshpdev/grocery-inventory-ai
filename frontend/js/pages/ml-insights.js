@@ -29,6 +29,7 @@ function renderMLInsights(container) {
         <div class="chart-container" style="height:350px"><canvas id="importance-chart"></canvas></div>
       </div>
     </div>
+    <div id="forecast-metrics-container"></div>
   `;
   loadMLData();
 }
@@ -147,13 +148,10 @@ function renderModelRankings(models) {
 }
 
 async function renderForecastMetrics() {
-  const container = document.getElementById('model-rankings');
+  const container = document.getElementById('forecast-metrics-container');
   if (!container) return;
 
-  const forecastSection = document.createElement('div');
-  forecastSection.id = 'forecast-metrics-section';
-  forecastSection.style.marginTop = '32px';
-  forecastSection.innerHTML = `
+  container.innerHTML = `
     <div class="card" style="border-color:rgba(59,130,246,0.2)">
       <div class="card-header">
         <div>
@@ -184,7 +182,6 @@ async function renderForecastMetrics() {
       </div>
     </div>
   `;
-  container.parentNode.insertBefore(forecastSection, container.nextSibling);
 }
 
 function renderImportanceChart(features) {

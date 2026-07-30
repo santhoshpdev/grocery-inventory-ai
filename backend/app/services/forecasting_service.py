@@ -88,8 +88,11 @@ class ForecastingService:
         else:
             trend_dir = "Stable"
 
+        product_name = str(prod_data['product_name'].iloc[0]) if len(prod_data) > 0 and 'product_name' in prod_data.columns else None
+
         return {
             'product_id': product_id,
+            'product_name': product_name,
             'forecast_horizon': horizon,
             'model': 'Holt-Winters Exponential Smoothing',
             'historical': historical,

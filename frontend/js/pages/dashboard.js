@@ -241,61 +241,111 @@ function renderPriority(data, total) {
   `;
 }
 
+const statusChartPlugin = {
+  id: 'centerText',
+  beforeDraw(chart) {
+    const { width, height, ctx } = chart;
+    ctx.save();
+    const total = chart.config.data.datasets[0].data.reduce((a, b) => a + b, 0);
+    const cx = width / 2;
+    const cy = height / 2 - 6;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 26px Inter, sans-serif';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#f0f4f8';
+    ctx.fillText(total.toLocaleString(), cx, cy - 4);
+    ctx.font = '500 11px Inter, sans-serif';
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#64748b';
+    ctx.fillText('Total Records', cx, cy + 18);
+    ctx.restore();
+  },
+};
+
 function createStatusChart(distribution) {
   const canvas = document.getElementById('status-chart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (statusChart) statusChart.destroy();
   const tc = chartTickColor();
-  const gc = chartGridColor();
   const tooltipOpts = chartTooltip();
 
   const total = distribution.reduce((s, d) => s + d.count, 0);
   const statusColors = { 'Low Stock': '#ef4444', 'Normal': '#f59e0b', 'Overstock': '#10b981' };
+  const statusLabels = { 'Low Stock': 'Low Stock', 'Normal': 'Normal Stock', 'Overstock': 'Overstock' };
 
-  const sorted = [...distribution].sort((a, b) => b.count - a.count);
+  const labels = ['Low Stock', 'Normal', 'Overstock'];
+  const data = labels.map(l => {
+    const found = distribution.find(d => d.status === l);
+    return found ? found.count : 0;
+  });
+  const colors = labels.map(l => statusColors[l]);
+  const displayLabels = labels.map(l => statusLabels[l]);
+
+  const totalPct = total || 1;
 
   statusChart = new Chart(ctx, {
-    type: 'bar',
+    type: 'doughnut',
     data: {
-      labels: sorted.map(d => d.status),
+      labels: displayLabels,
       datasets: [{
-        label: 'Records',
-        data: sorted.map(d => d.count),
-        backgroundColor: sorted.map(d => statusColors[d.status] || '#64748b'),
-        borderRadius: 6,
-        borderSkipped: false,
-        barThickness: 36,
+        data,
+        backgroundColor: colors,
+        borderColor: ['rgba(239,68,68,0.3)', 'rgba(245,158,11,0.3)', 'rgba(16,185,129,0.3)'],
+        borderWidth: 2,
+        hoverOffset: 12,
       }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      animation: { duration: 800 },
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      radius: '90%',
+      animation: {
+        animateRotate: true,
+        duration: 1000,
+        easing: 'easeOutQuart',
+      },
       plugins: {
-        legend: { display: false },
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 16,
+            usePointStyle: true,
+            pointStyle: 'circle',
+            color: tc,
+            font: { size: 12, weight: '600' },
+            generateLabels: function(chart) {
+              const ds = chart.data.datasets[0];
+              return chart.data.labels.map((label, i) => ({
+                text: `${label}: ${ds.data[i].toLocaleString()} (${((ds.data[i] / totalPct) * 100).toFixed(1)}%)`,
+                fillStyle: ds.backgroundColor[i],
+                strokeStyle: ds.borderColor[i],
+                pointStyle: 'circle',
+                index: i,
+              }));
+            },
+          },
+        },
         tooltip: {
           ...tooltipOpts,
           callbacks: {
+            title: function(items) {
+              return items[0].label;
+            },
             label: function(ctx) {
               const pct = total ? ((ctx.raw / total) * 100).toFixed(1) : 0;
-              return ctx.raw + ' records (' + pct + '%)';
+              return ` ${ctx.raw.toLocaleString()} products  (${pct}%)`;
+            },
+            afterLabel: function(ctx) {
+              if (ctx.dataIndex === 0) return ' ⚠️ Needs attention';
+              if (ctx.dataIndex === 2) return ' 📦 Excess inventory';
+              return '';
             },
           },
         },
       },
-      scales: {
-        x: {
-          beginAtZero: true,
-          grid: { color: gc },
-          ticks: { color: tc, callback: function(v) { return Number.isInteger(v) ? v : ''; } },
-          title: { display: true, text: 'Records', color: tc },
-        },
-        y: {
-          grid: { display: false },
-          ticks: { color: tc, font: { size: 13, weight: '600' } },
-        },
-      },
     },
+    plugins: [statusChartPlugin],
   });
 }
 
@@ -446,8 +496,9 @@ function renderForecastTrendChart(overview) {
       vals[shortDate] = f.predicted_demand;
       allLabels.add(shortDate);
     });
+    const prodName = displayName(item.product_name);
     datasets.push({
-      label: 'Product ' + item.product_id,
+      label: prodName,
       data: Array.from(allLabels).map(d => vals[d] || null),
       borderColor: colors[idx % colors.length],
       backgroundColor: colors[idx % colors.length] + '18',
@@ -484,7 +535,20 @@ function renderForecastTrendChart(overview) {
       responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { position: 'top', labels: { usePointStyle: true, padding: 12, color: tc, font: { size: 10 } } },
-        tooltip: tooltipOpts,
+        tooltip: {
+          ...tooltipOpts,
+          callbacks: {
+            title: function(items) {
+              return 'Date: ' + items[0].label;
+            },
+            label: function(ctx) {
+              return ' ' + ctx.dataset.label + ': ' + ctx.raw + ' units';
+            },
+            afterLabel: function() {
+              return ' Forecast horizon: 7 days';
+            },
+          },
+        },
       },
       scales: {
         y: { beginAtZero: true, grid: { color: gc }, ticks: { color: tc }, title: { display: true, text: 'Demand (units)', color: tc } },

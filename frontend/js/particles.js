@@ -19,11 +19,12 @@ class ParticleNetwork {
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
     this.particles = [];
-    this.mouse = { x: null, y: null, radius: 200 };
+    this.mouse = { x: null, y: null, radius: 220 };
+    this.clicks = [];
     const isMobile = window.innerWidth < 768;
     this.count = isMobile ? 40 : 90;
     this.maxDist = 200;
-    this.speed = 0.25;
+    this.speed = 0.6;
     this.time = 0;
     this.flowAngle = 0;
 
@@ -82,6 +83,15 @@ class ParticleNetwork {
     window.addEventListener('mouseleave', () => { this.mouse.x = null; this.mouse.y = null; });
     window.addEventListener('touchend', () => { this.mouse.x = null; this.mouse.y = null; });
 
+    const onClick = (e) => {
+      if (e.button !== 0) return;
+      const target = e.target;
+      if (!target || target === this.canvas) return;
+      if (target.closest('.card, .forecast-controls, .search-bar, .form-grid, .modal, .table-container, .chart-container, .global-search-overlay, .chat-panel, .navbar, .mobile-nav, button, a, input, select, textarea, label, .btn, .nav-link, .chat-toggle, .chat-send, .theme-toggle, .nav-search-btn, .modal-close, .pagination-btns, .export-btn, .global-search-result, .filter-select, .forecast-select')) return;
+      this.clicks.push({ x: e.clientX, y: e.clientY, radius: 160, power: 0.3, life: 1 });
+    };
+    window.addEventListener('click', onClick);
+
     const observer = new MutationObserver(() => {
       const primary = getThemePrimary();
       this.themeColor = hexToRgba(primary, 0.8);
@@ -98,6 +108,15 @@ class ParticleNetwork {
     this.time += 0.003;
     this.flowAngle += 0.001;
 
+    for (let ci = this.clicks.length - 1; ci >= 0; ci--) {
+      this.clicks[ci].life -= 0.02;
+      this.clicks[ci].radius += 0.8;
+      this.clicks[ci].power *= 0.96;
+      if (this.clicks[ci].life <= 0) {
+        this.clicks.splice(ci, 1);
+      }
+    }
+
     for (const p of this.particles) {
       const flowX = Math.sin(this.flowAngle + p.phase) * 0.08;
       const flowY = Math.cos(this.flowAngle * 0.7 + p.phase * 1.3) * 0.08;
@@ -113,11 +132,24 @@ class ParticleNetwork {
       const dy = this.mouse.y - p.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < this.mouse.radius) {
-        const force = (1 - dist / this.mouse.radius) * 0.5;
-        p.x -= dx * 0.012 * force;
-        p.y -= dy * 0.012 * force;
-        p.vx += dx * 0.00008;
-        p.vy += dy * 0.00008;
+        const force = (1 - dist / this.mouse.radius) * 0.7;
+        p.x -= dx * 0.018 * force;
+        p.y -= dy * 0.018 * force;
+        p.vx += dx * 0.00015;
+        p.vy += dy * 0.00015;
+      }
+
+      for (let ci = this.clicks.length - 1; ci >= 0; ci--) {
+        const c = this.clicks[ci];
+        const cdx = p.x - c.x;
+        const cdy = p.y - c.y;
+        const cDist = Math.sqrt(cdx * cdx + cdy * cdy);
+        if (cDist < c.radius && cDist > 0) {
+          const cForce = (1 - cDist / c.radius) * c.power;
+          const angle = Math.atan2(cdy, cdx);
+          p.vx += Math.cos(angle) * cForce * 2.5;
+          p.vy += Math.sin(angle) * cForce * 2.5;
+        }
       }
       p.vx *= 0.999;
       p.vy *= 0.999;
@@ -156,6 +188,22 @@ class ParticleNetwork {
         this.ctx.fill();
       }
     }
+
+    for (const c of this.clicks) {
+      const alpha = c.life * 0.5;
+      this.ctx.beginPath();
+      this.ctx.arc(c.x, c.y, c.radius * (1 - c.life * 0.12), 0, Math.PI * 2);
+      const rippleColor = this.themeColor || 'rgba(5,150,105,0.8)';
+      this.ctx.strokeStyle = rippleColor.replace('0.8', String(Math.max(0, alpha)));
+      this.ctx.lineWidth = 1.5;
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.arc(c.x, c.y, c.radius * (1 - c.life * 0.3), 0, Math.PI * 2);
+      this.ctx.strokeStyle = rippleColor.replace('0.8', String(Math.max(0, alpha * 0.5)));
+      this.ctx.lineWidth = 1;
+      this.ctx.stroke();
+    }
+
     requestAnimationFrame(() => this.animate());
   }
 }
