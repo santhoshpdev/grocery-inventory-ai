@@ -1,5 +1,5 @@
-const AUTH_TOKEN_KEY = 'stockintel_token';
-const AUTH_USER_KEY = 'stockintel_user';
+const AUTH_TOKEN_KEY = 'stockora_token';
+const AUTH_USER_KEY = 'stockora_user';
 
 let currentUser = null;
 

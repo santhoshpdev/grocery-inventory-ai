@@ -1,8 +1,8 @@
-# StockIntel AI — Complete Project Architecture
+# STOCKORA AI — Complete Project Architecture
 
 ## Overview
 
-StockIntel AI is a Dockerized, AI-powered grocery inventory decision support system. It uses a CatBoost ML model to classify stock status (Low Stock, Normal, Overstock) across 200 products (6,000 inventory records). The frontend is a premium 5-page SPA with glassmorphism, particle animations, 3D tilt cards, and a floating glass navbar.
+STOCKORA AI is a Dockerized, AI-powered grocery inventory decision support system. It uses a CatBoost ML model to classify stock status (Low Stock, Normal, Overstock) across 200 products (6,000 inventory records). The frontend is a premium 5-page SPA with glassmorphism, particle animations, 3D tilt cards, and a floating glass navbar.
 
 ---
 

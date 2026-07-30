@@ -1,4 +1,4 @@
-# StockIntel AI — Grocery Inventory Decision Support System
+# STOCKORA AI — Grocery Inventory Decision Support System
 
 An intelligent decision support system for grocery inventory optimization using machine learning. Built with FastAPI, PostgreSQL, and a premium vanilla JS frontend.
 

@@ -97,7 +97,7 @@ function renderHero(data, total, healthScore) {
   document.getElementById('dash-hero').innerHTML = `
     <div class="hero-section">
       <div class="hero-content">
-        <div class="hero-title">Good <span id="dash-greeting"></span>, <span class="text-gradient">StockIntel AI</span></div>
+        <div class="hero-title">Good <span id="dash-greeting"></span>, <span class="text-gradient">STOCKORA AI</span></div>
         <div class="hero-subtitle">Your AI-powered inventory intelligence system is active. Monitor stock health, run predictions, and explore ${data.total_records.toLocaleString()} inventory records across ${data.total_products} products.</div>
         <div class="hero-stats">
           <span class="hero-stat"><i class="fas fa-database"></i> <strong>${data.total_records.toLocaleString()}</strong> records</span>

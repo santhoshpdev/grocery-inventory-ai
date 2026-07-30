@@ -125,7 +125,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Grocery Inventory AI",
+    title="STOCKORA AI",
     description="AI-Powered Inventory Decision Support System",
     version="1.0.0",
     lifespan=lifespan,

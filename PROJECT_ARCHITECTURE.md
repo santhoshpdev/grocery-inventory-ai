@@ -1,4 +1,4 @@
-# StockIntel AI — Full Project Architecture
+# STOCKORA AI — Full Project Architecture
 
 ## Table of Contents
 1. [System Architecture](#1-system-architecture)

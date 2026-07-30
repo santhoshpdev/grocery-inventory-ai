@@ -5,9 +5,9 @@ let invForecastMap = {};
 function renderInventory(container) {
   container.innerHTML = `
     <div class="card">
-      <div style="margin-bottom:20px">
-        <div class="card-title" style="font-size:18px"><i class="fas fa-boxes" style="margin-right:8px;color:var(--primary)"></i>Inventory Records</div>
-        <div class="card-subtitle" style="font-size:12px">Browse, search, and filter all product inventory records</div>
+      <div class="mb-12">
+        <div class="card-title page-title-lg"><i class="fas fa-boxes"></i>Inventory Records</div>
+        <div class="card-subtitle card-subtitle-sm">Browse, search, and filter all product inventory records</div>
       </div>
       <div class="search-bar">
         <input type="text" class="search-input" id="inv-search" placeholder="Search by product name..." />

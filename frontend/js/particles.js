@@ -24,7 +24,7 @@ class ParticleNetwork {
     const isMobile = window.innerWidth < 768;
     this.count = isMobile ? 40 : 90;
     this.maxDist = 200;
-    this.speed = 0.6;
+    this.speed = 1.2;
     this.time = 0;
     this.flowAngle = 0;
 
@@ -105,8 +105,8 @@ class ParticleNetwork {
 
   animate() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.time += 0.003;
-    this.flowAngle += 0.001;
+    this.time += 0.005;
+    this.flowAngle += 0.002;
 
     for (let ci = this.clicks.length - 1; ci >= 0; ci--) {
       this.clicks[ci].life -= 0.02;
@@ -118,8 +118,8 @@ class ParticleNetwork {
     }
 
     for (const p of this.particles) {
-      const flowX = Math.sin(this.flowAngle + p.phase) * 0.08;
-      const flowY = Math.cos(this.flowAngle * 0.7 + p.phase * 1.3) * 0.08;
+      const flowX = Math.sin(this.flowAngle + p.phase) * 0.15;
+      const flowY = Math.cos(this.flowAngle * 0.7 + p.phase * 1.3) * 0.15;
       p.x += p.vx + flowX;
       p.y += p.vy + flowY;
       if (p.x < -20 || p.x > this.canvas.width + 20) p.vx *= -1;

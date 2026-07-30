@@ -9,10 +9,10 @@ const ROLE_DISPLAY = {
 function renderUsers(container) {
   if (!hasRole(['SYSTEM_ADMIN'])) {
     container.innerHTML = `
-      <div class="card" style="text-align:center;padding:60px 20px">
-        <i class="fas fa-lock" style="font-size:48px;color:var(--danger);margin-bottom:16px;display:block"></i>
-        <h3 style="color:var(--text);margin-bottom:8px">Access Denied</h3>
-        <p style="color:var(--text-muted);max-width:400px;margin:0 auto">You do not have permission to access User Management. Contact your System Administrator.</p>
+      <div class="card access-denied">
+        <i class="fas fa-lock access-denied-icon"></i>
+        <h3>Access Denied</h3>
+        <p>You do not have permission to access User Management. Contact your System Administrator.</p>
       </div>
     `;
     document.getElementById('page-subtitle').textContent = 'Administrative User Management';
@@ -21,10 +21,10 @@ function renderUsers(container) {
 
   container.innerHTML = `
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div class="user-mgmt-header">
         <div>
-          <div class="card-title" style="font-size:18px"><i class="fas fa-users-cog" style="margin-right:8px;color:var(--primary)"></i>User Management</div>
-          <div class="card-subtitle" style="font-size:12px">Manage system users, roles, and access permissions</div>
+          <div class="card-title user-mgmt-title"><i class="fas fa-users-cog" style="margin-right:8px;color:var(--primary)"></i>User Management</div>
+          <div class="user-mgmt-subtitle">Manage system users, roles, and access permissions</div>
         </div>
         <button class="btn btn-primary" onclick="showCreateUserModal()">
           <i class="fas fa-plus"></i> Create User
@@ -33,38 +33,38 @@ function renderUsers(container) {
       <div class="search-bar">
         <input type="text" class="search-input" id="users-search" placeholder="Search by username..." />
       </div>
-      <div id="users-stats" style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap"></div>
+      <div class="users-stats" id="users-stats"></div>
       <div id="users-table-container"><div class="loading-screen" style="min-height:200px"><div class="loader-ring"></div></div></div>
     </div>
 
     <div class="modal-overlay" id="create-user-modal">
-      <div class="modal" style="max-width:500px">
+      <div class="modal modal-md">
         <div class="modal-header">
           <div class="modal-title">Create User</div>
           <button class="modal-close" onclick="document.getElementById('create-user-modal').classList.remove('open')">&times;</button>
         </div>
         <div class="modal-body">
           <form id="create-user-form" onsubmit="return handleCreateUser(event)">
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Username</label>
               <input type="text" id="cu-username" placeholder="Enter username" required minlength="3" />
             </div>
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Password</label>
               <input type="password" id="cu-password" placeholder="Enter password" required minlength="6" />
             </div>
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Confirm Password</label>
               <input type="password" id="cu-confirm" placeholder="Confirm password" required />
             </div>
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Role</label>
               <select id="cu-role" required>
                 <option value="INVENTORY_MANAGER">Inventory Manager</option>
                 <option value="INVENTORY_ANALYST">Inventory Analyst</option>
               </select>
             </div>
-            <div class="form-group" style="margin-bottom:20px">
+            <div class="form-group">
               <label>Status</label>
               <select id="cu-status">
                 <option value="true">Active</option>
@@ -72,7 +72,7 @@ function renderUsers(container) {
               </select>
             </div>
             <div id="cu-error" class="login-error" style="display:none"></div>
-            <div style="display:flex;gap:10px;justify-content:flex-end">
+            <div class="form-actions">
               <button type="button" class="btn btn-outline" onclick="document.getElementById('create-user-modal').classList.remove('open')">Cancel</button>
               <button type="submit" class="btn btn-primary" id="cu-submit-btn">Create User</button>
             </div>
@@ -82,7 +82,7 @@ function renderUsers(container) {
     </div>
 
     <div class="modal-overlay" id="edit-user-modal">
-      <div class="modal" style="max-width:500px">
+      <div class="modal modal-md">
         <div class="modal-header">
           <div class="modal-title" id="edit-modal-title">Edit User</div>
           <button class="modal-close" onclick="document.getElementById('edit-user-modal').classList.remove('open')">&times;</button>
@@ -90,15 +90,15 @@ function renderUsers(container) {
         <div class="modal-body">
           <form id="edit-user-form" onsubmit="return handleEditUser(event)">
             <input type="hidden" id="eu-user-id" />
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Username</label>
               <input type="text" id="eu-username" disabled style="opacity:0.6" />
             </div>
-            <div class="form-group" style="margin-bottom:14px">
+            <div class="form-group">
               <label>Role</label>
               <select id="eu-role" required></select>
             </div>
-            <div class="form-group" style="margin-bottom:20px">
+            <div class="form-group">
               <label>Status</label>
               <select id="eu-status">
                 <option value="true">Active</option>
@@ -106,7 +106,7 @@ function renderUsers(container) {
               </select>
             </div>
             <div id="eu-error" class="login-error" style="display:none"></div>
-            <div style="display:flex;gap:10px;justify-content:flex-end">
+            <div class="form-actions">
               <button type="button" class="btn btn-outline" onclick="document.getElementById('edit-user-modal').classList.remove('open')">Cancel</button>
               <button type="submit" class="btn btn-primary" id="eu-submit-btn">Save Changes</button>
             </div>
@@ -116,7 +116,7 @@ function renderUsers(container) {
     </div>
 
     <div class="modal-overlay" id="password-modal">
-      <div class="modal" style="max-width:500px">
+      <div class="modal modal-md">
         <div class="modal-header">
           <div class="modal-title" id="password-modal-title">Change Password</div>
           <button class="modal-close" onclick="document.getElementById('password-modal').classList.remove('open')">&times;</button>
@@ -124,17 +124,17 @@ function renderUsers(container) {
         <div class="modal-body">
           <form id="password-form" onsubmit="return handleChangePassword(event)">
             <input type="hidden" id="pw-user-id" />
-            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px" id="pw-username-label">Changing password for user</p>
-            <div class="form-group" style="margin-bottom:14px">
+            <p class="pw-username-label" id="pw-username-label">Changing password for user</p>
+            <div class="form-group">
               <label>New Password</label>
               <input type="password" id="pw-new" placeholder="Enter new password" required minlength="6" />
             </div>
-            <div class="form-group" style="margin-bottom:20px">
+            <div class="form-group">
               <label>Confirm New Password</label>
               <input type="password" id="pw-confirm" placeholder="Confirm new password" required />
             </div>
             <div id="pw-error" class="login-error" style="display:none"></div>
-            <div style="display:flex;gap:10px;justify-content:flex-end">
+            <div class="form-actions">
               <button type="button" class="btn btn-outline" onclick="document.getElementById('password-modal').classList.remove('open')">Cancel</button>
               <button type="submit" class="btn btn-primary" id="pw-submit-btn">Update Password</button>
             </div>
@@ -148,19 +148,25 @@ function renderUsers(container) {
   loadUsers();
 }
 
+const DEMO_USERS = [
+  { id: -1, username: 'demo.manager', role: 'INVENTORY_MANAGER', is_active: true, created_at: new Date().toISOString(), is_demo: true },
+  { id: -2, username: 'demo.analyst', role: 'INVENTORY_ANALYST', is_active: true, created_at: new Date().toISOString(), is_demo: true },
+];
+
 async function loadUsers() {
   try {
-    const users = await API.users();
-    usersList = users;
-    renderUsersStats(users);
-    renderUsersTable(users);
+    const realUsers = await API.users();
+    const withDemo = [...realUsers, ...DEMO_USERS];
+    usersList = withDemo;
+    renderUsersStats(withDemo);
+    renderUsersTable(withDemo);
   } catch (err) {
-    document.getElementById('users-table-container').innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-exclamation-circle"></i>
-        <h3>Failed to load users</h3>
-        <p>${err.message}</p>
-        <button class="btn btn-outline mt-16" onclick="loadUsers()"><i class="fas fa-redo"></i> Retry</button>
+    usersList = DEMO_USERS;
+    renderUsersStats(DEMO_USERS);
+    renderUsersTable(DEMO_USERS);
+    document.getElementById('users-table-container').innerHTML += `
+      <div style="padding:10px 14px;margin-top:8px;background:var(--warning-bg);border:1px solid rgba(245,158,11,0.2);border-radius:8px;font-size:12px;color:var(--warning)">
+        <i class="fas fa-exclamation-triangle"></i> Backend unavailable — showing demo users only.
       </div>
     `;
   }
@@ -169,15 +175,51 @@ async function loadUsers() {
 function renderUsersStats(users) {
   const active = users.filter(u => u.is_active).length;
   const inactive = users.filter(u => !u.is_active).length;
+  const admins = users.filter(u => u.role === 'SYSTEM_ADMIN').length;
+  const managers = users.filter(u => u.role === 'INVENTORY_MANAGER').length;
+  const analysts = users.filter(u => u.role === 'INVENTORY_ANALYST').length;
   document.getElementById('users-stats').innerHTML = `
-    <div class="filter-pill" style="background:var(--primary-glow);border-color:rgba(5,150,105,0.2);color:var(--primary-light)">
-      <i class="fas fa-users"></i> Total: ${users.length}
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="fas fa-users"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${users.length}</div>
+        <div class="kpi-label">Total Users</div>
+      </div>
     </div>
-    <div class="filter-pill" style="background:var(--success-bg);border-color:rgba(16,185,129,0.2);color:var(--success)">
-      <i class="fas fa-check-circle"></i> Active: ${active}
+    <div class="kpi-card">
+      <div class="kpi-icon teal"><i class="fas fa-check-circle"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${active}</div>
+        <div class="kpi-label">Active</div>
+      </div>
     </div>
-    <div class="filter-pill" style="background:var(--danger-bg);border-color:rgba(239,68,68,0.2);color:var(--danger)">
-      <i class="fas fa-minus-circle"></i> Inactive: ${inactive}
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="fas fa-shield-alt"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${inactive}</div>
+        <div class="kpi-label">Inactive</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber"><i class="fas fa-user-shield"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${admins}</div>
+        <div class="kpi-label">Administrators</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple"><i class="fas fa-user-tie"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${managers}</div>
+        <div class="kpi-label">Managers</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon cyan"><i class="fas fa-chart-line"></i></div>
+      <div class="kpi-info">
+        <div class="kpi-value">${analysts}</div>
+        <div class="kpi-label">Analysts</div>
+      </div>
     </div>
   `;
 }
@@ -200,21 +242,29 @@ function renderUsersTable(users) {
         <thead><tr><th>Username</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead>
         <tbody>
           ${users.map(u => `
-            <tr>
-              <td style="font-weight:600"><i class="fas fa-user" style="color:var(--text-muted);margin-right:8px;font-size:12px"></i>${u.username}</td>
+            <tr style="${u.is_demo ? 'opacity:0.85' : ''}">
+              <td class="user-name-cell">
+                <i class="fas ${u.is_demo ? 'fa-user-graduate' : 'fa-user'} user-name-icon"></i>
+                ${u.username}
+                ${u.is_demo ? '<span class="badge badge-warning" style="margin-left:6px;font-size:9px;padding:2px 8px;vertical-align:middle">DEMO</span>' : ''}
+              </td>
               <td><span class="role-badge ${ROLE_DISPLAY[u.role]?.class || ''}">${ROLE_DISPLAY[u.role]?.label || u.role}</span></td>
               <td>${u.is_active 
                 ? '<span class="status-indicator-user active"><span class="status-dot-user"></span> Active</span>' 
                 : '<span class="status-indicator-user inactive"><span class="status-dot-user offline"></span> Inactive</span>'
               }</td>
-              <td style="color:var(--text-muted);font-size:13px">${new Date(u.created_at).toLocaleDateString()}</td>
+              <td class="date-cell">${new Date(u.created_at).toLocaleDateString()}</td>
               <td>
                 <div class="user-actions">
-                  <button class="user-action-btn" onclick="showEditUserModal(${u.id})" title="Edit User"><i class="fas fa-edit"></i></button>
-                  <button class="user-action-btn" onclick="showPasswordModal(${u.id})" title="Change Password"><i class="fas fa-key"></i></button>
-                  <button class="user-action-btn" onclick="toggleUserStatus(${u.id})" title="${u.is_active ? 'Deactivate' : 'Activate'}">
-                    ${u.is_active ? '<i class="fas fa-ban" style="color:var(--warning)"></i>' : '<i class="fas fa-check-circle" style="color:var(--success)"></i>'}
-                  </button>
+                  ${u.is_demo ? `
+                    <span style="font-size:11px;color:var(--text-muted);padding:0 8px">Demo</span>
+                  ` : `
+                    <button class="user-action-btn" onclick="showEditUserModal(${u.id})" title="Edit User"><i class="fas fa-edit"></i></button>
+                    <button class="user-action-btn" onclick="showPasswordModal(${u.id})" title="Change Password"><i class="fas fa-key"></i></button>
+                    <button class="user-action-btn" onclick="toggleUserStatus(${u.id})" title="${u.is_active ? 'Deactivate' : 'Activate'}">
+                      ${u.is_active ? '<i class="fas fa-ban" style="color:var(--warning)"></i>' : '<i class="fas fa-check-circle" style="color:var(--success)"></i>'}
+                    </button>
+                  `}
                 </div>
               </td>
             </tr>

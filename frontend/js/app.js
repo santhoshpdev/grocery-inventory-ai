@@ -39,10 +39,24 @@ function updateUserProfile() {
   const user = getCurrentUser();
   if (!user) return;
   document.getElementById('nav-user-name').textContent = user.username;
-  document.getElementById('nav-user-role').textContent = ROLE_LABELS[user.role] || user.role;
+  document.getElementById('dropdown-user-name').textContent = user.username;
+  document.getElementById('dropdown-user-role').textContent = ROLE_LABELS[user.role] || user.role;
   document.getElementById('mobile-user-name').textContent = user.username;
   document.getElementById('mobile-user-role').textContent = ROLE_LABELS[user.role] || user.role;
 }
+
+function toggleUserDropdown(event) {
+  event.stopPropagation();
+  const profile = document.getElementById('nav-user-profile');
+  profile.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  const profile = document.getElementById('nav-user-profile');
+  if (profile && !profile.contains(e.target)) {
+    profile.classList.remove('open');
+  }
+});
 
 async function handleLogin(event) {
   event.preventDefault();
@@ -187,24 +201,11 @@ function initApp() {
     });
   }
 
-  const timeEl = document.getElementById('header-time');
-  if (timeEl) {
-    function updateTime() {
-      const now = new Date();
-      timeEl.textContent = now.toLocaleString('en-US', {
-        hour: '2-digit', minute: '2-digit',
-        hour12: false
-      });
-    }
-    updateTime();
-    setInterval(updateTime, 30000);
-  }
-
   function updateNavIndicator(page) {
     const indicator = document.getElementById('nav-indicator');
     const activeLink = document.querySelector('.nav-link.active');
     if (indicator && activeLink) {
-      const parent = activeLink.closest('.nav-links');
+      const parent = document.getElementById('nav-center');
       if (parent) {
         const parentRect = parent.getBoundingClientRect();
         const linkRect = activeLink.getBoundingClientRect();
