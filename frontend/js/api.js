@@ -108,4 +108,8 @@ const API = {
     body: JSON.stringify(data),
   }),
   forecastOverview: () => apiFetch('/forecast/overview'),
+  chat: (message) => apiFetch('/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message }),
+  }),
 };

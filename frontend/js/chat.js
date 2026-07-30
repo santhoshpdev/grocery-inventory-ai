@@ -1,14 +1,14 @@
 let chatOpen = false;
 
 const SUGGESTIONS = [
-  "How many products are low stock?",
-  "Which products need attention?",
   "Show inventory summary",
+  "Which products are low in stock?",
+  "Which products need attention?",
+  "How many products are low stock?",
   "Explain the AI prediction",
   "What is the best ML model?",
   "How does forecasting work?",
-  "Which products have increasing demand?",
-  "What is the forecast for " + displayName('Product_001') + "?",
+  "What should I restock?",
 ];
 
 function toggleChat() {
@@ -83,6 +83,16 @@ function sendSuggestion(text) {
   sendChat();
 }
 
+function clearChat() {
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs) return;
+  const welcome = document.querySelector('#chat-messages .chat-msg');
+  msgs.innerHTML = '';
+  if (welcome) msgs.appendChild(welcome.cloneNode(true));
+  hideSuggestions();
+  setTimeout(showSuggestions, 500);
+}
+
 async function sendChat() {
   const input = document.getElementById('chat-input');
   const text = input?.value?.trim();
@@ -92,21 +102,15 @@ async function sendChat() {
   addMessage(text, 'user');
   showTyping();
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Server error' }));
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    const data = await res.json();
+    const data = await API.chat(text);
     hideTyping();
     addMessage(data.message, 'assistant');
   } catch (err) {
     hideTyping();
-    addMessage('Sorry, I encountered an error. Please try again.', 'assistant');
+    const msg = err.message?.includes('401') || err.message?.includes('Session expired')
+      ? 'Please log in again to use the chat.'
+      : 'Sorry, I encountered an error. Please try again.';
+    addMessage(msg, 'assistant');
   }
 }
 

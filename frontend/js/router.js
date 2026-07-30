@@ -220,6 +220,19 @@ function handleRoute() {
     el.classList.toggle('active', el.dataset.page === page);
   });
 
+  const indicator = document.getElementById('nav-indicator');
+  const activeLink = document.querySelector('.nav-link.active');
+  if (indicator && activeLink) {
+    const parent = document.getElementById('nav-center');
+    if (parent) {
+      const parentRect = parent.getBoundingClientRect();
+      const linkRect = activeLink.getBoundingClientRect();
+      indicator.style.width = linkRect.width + 'px';
+      indicator.style.left = (linkRect.left - parentRect.left) + 'px';
+      indicator.classList.add('visible');
+    }
+  }
+
   const content = document.getElementById('page-content');
   if (!content) return;
 

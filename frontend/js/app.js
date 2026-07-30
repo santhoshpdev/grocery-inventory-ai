@@ -201,30 +201,6 @@ function initApp() {
     });
   }
 
-  function updateNavIndicator(page) {
-    const indicator = document.getElementById('nav-indicator');
-    const activeLink = document.querySelector('.nav-link.active');
-    if (indicator && activeLink) {
-      const parent = document.getElementById('nav-center');
-      if (parent) {
-        const parentRect = parent.getBoundingClientRect();
-        const linkRect = activeLink.getBoundingClientRect();
-        indicator.style.width = linkRect.width + 'px';
-        indicator.style.left = (linkRect.left - parentRect.left) + 'px';
-        indicator.classList.add('visible');
-      }
-    }
-  }
-
-  const origHandleRoute = window.handleRoute;
-  if (origHandleRoute) {
-    window.addEventListener('hashchange', () => {
-      setTimeout(updateNavIndicator, 200);
-    });
-  }
-
-  setTimeout(updateNavIndicator, 300);
-
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -237,12 +213,12 @@ function initApp() {
     document.querySelectorAll('.animate-fade').forEach(el => observer.observe(el));
   }
 
+  const origHandleRoute = window.handleRoute;
   if (origHandleRoute) {
     const origRender = origHandleRoute;
     window.handleRoute = function() {
       origRender();
       setTimeout(observeCards, 400);
-      setTimeout(updateNavIndicator, 200);
     };
   }
 

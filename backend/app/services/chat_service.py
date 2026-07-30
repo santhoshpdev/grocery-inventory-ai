@@ -34,14 +34,6 @@ def detect_intent(message: str) -> str:
     return "UNKNOWN"
 
 
-def detect_intent(message: str) -> str:
-    msg = message.lower().strip()
-    for intent, pattern in INTENTS:
-        if re.search(pattern, msg):
-            return intent
-    return "UNKNOWN"
-
-
 class ChatService:
     def __init__(self, db: Session):
         self.db = db
