@@ -59,31 +59,116 @@ function statusBadgeClass(status) {
 }
 
 function initTheme() {
-  const saved = localStorage.getItem('theme');
-  if (saved === 'light' || !saved) {
-    document.documentElement.setAttribute('data-theme', 'light');
-    if (!saved) localStorage.setItem('theme', 'light');
+  const savedTheme = localStorage.getItem('opencode_theme') || 'emerald';
+  const savedMode = localStorage.getItem('opencode_mode') || 'dark';
+
+  const html = document.documentElement;
+  html.setAttribute('data-theme', savedTheme);
+
+  if (savedMode === 'light' && !html.hasAttribute('data-mode')) {
+    html.setAttribute('data-mode', 'light');
+  } else if (savedMode === 'dark') {
+    html.removeAttribute('data-mode');
   }
+
+  updateThemeCheck(savedTheme);
+  updateThemeModeLabel();
 }
 
-function toggleTheme() {
+function setTheme(theme) {
   const html = document.documentElement;
-  const isLight = html.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    html.removeAttribute('data-theme');
-    localStorage.setItem('theme', 'dark');
-  } else {
-    html.setAttribute('data-theme', 'light');
-    localStorage.setItem('theme', 'light');
-  }
+  html.setAttribute('data-theme', theme);
+  localStorage.setItem('opencode_theme', theme);
+  updateThemeCheck(theme);
+  updateThemeModeLabel();
   updateThemeIcon();
+  closeThemeDropdown();
+
+  document.querySelectorAll('.chat-toggle, .chat-avatar, .chat-send, .brand-icon, .brand-badge')
+    .forEach(el => {
+      if (el) el.style.transition = 'background 0.4s ease, background-color 0.4s ease';
+    });
 }
+
+function toggleMode() {
+  const html = document.documentElement;
+  const hasLight = html.getAttribute('data-mode') === 'light' || html.getAttribute('data-theme') === 'light';
+  if (hasLight) {
+    html.removeAttribute('data-mode');
+    html.removeAttribute('data-theme');
+    html.setAttribute('data-theme', localStorage.getItem('opencode_theme') || 'emerald');
+    localStorage.setItem('opencode_mode', 'dark');
+  } else {
+    html.setAttribute('data-mode', 'light');
+    localStorage.setItem('opencode_mode', 'light');
+  }
+  updateThemeModeLabel();
+  updateThemeIcon();
+  closeThemeDropdown();
+}
+
+function updateThemeCheck(theme) {
+  document.querySelectorAll('.theme-check').forEach(el => el.style.display = 'none');
+  const check = document.getElementById('check-' + theme);
+  if (check) check.style.display = 'block';
+}
+
+function updateThemeModeLabel() {
+  const label = document.getElementById('theme-mode-label');
+  if (!label) return;
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-mode') === 'light' || html.getAttribute('data-theme') === 'light';
+  label.textContent = isLight ? 'Dark Mode' : 'Light Mode';
+}
+
+function toggleThemeDropdown() {
+  const dd = document.getElementById('theme-dropdown');
+  if (dd) dd.classList.toggle('open');
+}
+
+function closeThemeDropdown() {
+  const dd = document.getElementById('theme-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+
+document.addEventListener('click', function(e) {
+  const wrapper = document.querySelector('.theme-selector-wrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    closeThemeDropdown();
+  }
+});
 
 function updateThemeIcon() {
   const btn = document.getElementById('theme-toggle');
   if (!btn) return;
-  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-  btn.innerHTML = isLight ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  btn.innerHTML = '<i class="fas fa-palette"></i>';
+}
+
+function chartColors() {
+  const style = getComputedStyle(document.documentElement);
+  const chartStr = style.getPropertyValue('--chart-colors').trim();
+  if (chartStr) return chartStr.split(',').map(c => c.trim());
+  return ['#059669', '#10b981', '#34d399', '#6ee7b7', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6'];
+}
+
+function chartTooltip() {
+  return {
+    backgroundColor: 'rgba(7,11,20,0.9)',
+    titleColor: '#f0f4f8',
+    bodyColor: '#94a3b8',
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, padding: 12, cornerRadius: 8,
+  };
+}
+
+function chartGridColor() {
+  const style = getComputedStyle(document.documentElement);
+  return style.getPropertyValue('--border').trim() || 'rgba(255,255,255,0.04)';
+}
+
+function chartTickColor() {
+  const style = getComputedStyle(document.documentElement);
+  return style.getPropertyValue('--text-muted').trim() || '#64748b';
 }
 
 function exportCSV(records, filename = 'inventory-export.csv') {

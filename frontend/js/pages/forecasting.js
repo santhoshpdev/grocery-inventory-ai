@@ -47,7 +47,7 @@ function renderForecasting(container) {
     </div>
 
     <div id="forecast-results" style="display:none">
-      <div class="grid-3" id="forecast-summary-grid"></div>
+      <div class="forecast-summary-grid" id="forecast-summary-grid"></div>
       <div class="card">
         <div class="card-header">
           <div>
@@ -78,7 +78,7 @@ async function loadForecastProducts() {
   try {
     const products = await API.forecastProducts();
     select.innerHTML = '<option value="">Select a product...</option>' +
-      products.map(p => `<option value="${p.product_id}" ${selectedForecastProductId === p.product_id ? 'selected' : ''}>${p.product_name}</option>`).join('');
+      products.map(p => `<option value="${p.product_id}" ${selectedForecastProductId === p.product_id ? 'selected' : ''}>${displayName(p.product_name)}</option>`).join('');
     document.getElementById('forecast-demo-badge').innerHTML = `
       <div class="demo-badge">
         <i class="fas fa-flask"></i> SIMULATION MODE — Forecasts use synthetic historical demand data for demonstration purposes.
@@ -150,6 +150,11 @@ function renderForecastChart(data) {
   const ctx = canvas.getContext('2d');
   if (forecastChart) forecastChart.destroy();
 
+  const cols = chartColors();
+  const tc = chartTickColor();
+  const gc = chartGridColor();
+  const tooltipOpts = chartTooltip();
+
   const historicalDates = data.historical.map(d => d.date);
   const historicalDemand = data.historical.map(d => d.demand);
   const forecastDates = data.forecast.map(d => d.date);
@@ -174,8 +179,8 @@ function renderForecastChart(data) {
         {
           label: 'Historical Demand',
           data: histWithGap,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59,130,246,0.1)',
+          borderColor: cols[0],
+          backgroundColor: cols[0] + '18',
           borderWidth: 2,
           fill: true,
           tension: 0.3,
@@ -185,8 +190,8 @@ function renderForecastChart(data) {
         {
           label: 'Forecasted Demand',
           data: forecastWithGap,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16,185,129,0.1)',
+          borderColor: cols[1],
+          backgroundColor: cols[1] + '18',
           borderWidth: 2,
           borderDash: [6, 3],
           fill: true,
@@ -202,9 +207,10 @@ function renderForecastChart(data) {
       plugins: {
         legend: {
           position: 'top',
-          labels: { usePointStyle: true, padding: 16, color: '#94a3b8' },
+          labels: { usePointStyle: true, padding: 16, color: tc },
         },
         tooltip: {
+          ...tooltipOpts,
           callbacks: {
             label: function(ctx) {
               if (ctx.parsed.y === null) return null;
@@ -216,14 +222,14 @@ function renderForecastChart(data) {
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#64748b' },
-          title: { display: true, text: 'Demand (units)', color: '#64748b' },
+          grid: { color: gc },
+          ticks: { color: tc },
+          title: { display: true, text: 'Demand (units)', color: tc },
         },
         x: {
           grid: { display: false },
           ticks: {
-            color: '#94a3b8',
+            color: tc,
             maxTicksLimit: 15,
             callback: function(val, idx) {
               const label = this.getLabelForValue(val);

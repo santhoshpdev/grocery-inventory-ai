@@ -85,22 +85,29 @@ function renderModelChart(models) {
   if (!ctx) return;
   if (modelChart) modelChart.destroy();
   const sorted = [...models].sort((a, b) => a.accuracy - b.accuracy);
+  const cols = chartColors();
+  const tc = chartTickColor();
+  const gc = chartGridColor();
   modelChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: sorted.map(m => m.name),
       datasets: [
-        { label: 'Accuracy', data: sorted.map(m => m.accuracy), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? '#059669' : '#334155'), borderRadius: 3 },
-        { label: 'Precision', data: sorted.map(m => m.precision), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? '#10b981' : '#475569'), borderRadius: 3 },
-        { label: 'Recall', data: sorted.map(m => m.recall), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? '#34d399' : '#64748b'), borderRadius: 3 },
+        { label: 'Accuracy', data: sorted.map(m => m.accuracy), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? cols[0] : '#334155'), borderRadius: 4, borderSkipped: false },
+        { label: 'Precision', data: sorted.map(m => m.precision), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? cols[1] : '#475569'), borderRadius: 4, borderSkipped: false },
+        { label: 'Recall', data: sorted.map(m => m.recall), backgroundColor: sorted.map(m => m.name === 'CatBoost' ? cols[2] : '#64748b'), borderRadius: 4, borderSkipped: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 16, color: '#94a3b8' } } },
+      animation: { duration: 800 },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 16, color: tc } },
+        tooltip: { ...chartTooltip(), callbacks: { label: ctx => `${ctx.dataset.label}: ${(ctx.raw*100).toFixed(1)}%` } },
+      },
       scales: {
-        y: { beginAtZero: true, max: 1, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', callback: v => (v*100)+'%' } },
-        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: true, max: 1, grid: { color: gc }, ticks: { color: tc, callback: v => (v*100)+'%' } },
+        x: { grid: { display: false }, ticks: { color: tc } },
       },
     },
   });
@@ -166,6 +173,9 @@ function renderImportanceChart(features) {
   if (!ctx || !features || features.length === 0) return;
   if (importanceChart) importanceChart.destroy();
   const top = features.slice(0, 12).reverse();
+  const cols = chartColors();
+  const tc = chartTickColor();
+  const gc = chartGridColor();
   importanceChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -175,17 +185,21 @@ function renderImportanceChart(features) {
         data: top.map(f => f.Importance),
         backgroundColor: top.map((_, i) => {
           const t = 0.3 + (i / top.length) * 0.7;
-          return `rgba(5, 150, 105, ${t})`;
+          return cols[0] + Math.round(t * 255).toString(16).padStart(2, '0');
         }),
-        borderRadius: 3,
+        borderRadius: 6, borderSkipped: false,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-      plugins: { legend: { display: false } },
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: { ...chartTooltip(), callbacks: { label: ctx => `Importance: ${(ctx.raw*100).toFixed(1)}%` } },
+      },
       scales: {
-        x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b' } },
-        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+        x: { beginAtZero: true, grid: { color: gc }, ticks: { color: tc } },
+        y: { grid: { display: false }, ticks: { color: tc, font: { size: 11 } } },
       },
     },
   });

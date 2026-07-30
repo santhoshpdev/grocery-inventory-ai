@@ -8,7 +8,7 @@ const SUGGESTIONS = [
   "What is the best ML model?",
   "How does forecasting work?",
   "Which products have increasing demand?",
-  "What is the forecast for Product_001?",
+  "What is the forecast for " + displayName('Product_001') + "?",
 ];
 
 function toggleChat() {
@@ -62,9 +62,12 @@ function showSuggestions() {
   const div = document.createElement('div');
   div.className = 'chat-suggestions';
   div.id = 'chat-suggestions';
-  div.innerHTML = SUGGESTIONS.map(q =>
-    `<button class="chat-suggestion-btn" onclick="sendSuggestion('${q.replace(/'/g, "\\'")}')">${q}</button>`
+  div.innerHTML = SUGGESTIONS.map((q, idx) =>
+    `<button class="chat-suggestion-btn" data-idx="${idx}">${q}</button>`
   ).join('');
+  div.querySelectorAll('.chat-suggestion-btn').forEach((btn, idx) => {
+    btn.addEventListener('click', () => sendSuggestion(SUGGESTIONS[idx]));
+  });
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }

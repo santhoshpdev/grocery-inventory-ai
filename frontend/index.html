@@ -68,9 +68,44 @@
         <button class="nav-search-btn" id="search-btn" title="Search products (Ctrl+K)">
           <i class="fas fa-search"></i>
         </button>
-        <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
-          <i class="fas fa-sun"></i>
-        </button>
+        <div class="theme-selector-wrapper">
+          <button class="theme-toggle" id="theme-toggle" title="Change theme" onclick="toggleThemeDropdown()">
+            <i class="fas fa-palette"></i>
+          </button>
+          <div class="theme-dropdown" id="theme-dropdown">
+            <div class="theme-dropdown-header">Select Theme</div>
+            <div class="theme-option" data-theme-val="emerald" onclick="setTheme('emerald')">
+              <div class="theme-swatch" style="background:#059669"></div>
+              <span>Emerald Green</span>
+              <i class="fas fa-check theme-check" id="check-emerald"></i>
+            </div>
+            <div class="theme-option" data-theme-val="ocean" onclick="setTheme('ocean')">
+              <div class="theme-swatch" style="background:#0d7cc4"></div>
+              <span>Ocean Blue</span>
+              <i class="fas fa-check theme-check" id="check-ocean"></i>
+            </div>
+            <div class="theme-option" data-theme-val="purple" onclick="setTheme('purple')">
+              <div class="theme-swatch" style="background:#7c3aed"></div>
+              <span>Royal Purple</span>
+              <i class="fas fa-check theme-check" id="check-purple"></i>
+            </div>
+            <div class="theme-option" data-theme-val="rose" onclick="setTheme('rose')">
+              <div class="theme-swatch" style="background:#e11d48"></div>
+              <span>Rose Pink</span>
+              <i class="fas fa-check theme-check" id="check-rose"></i>
+            </div>
+            <div class="theme-option" data-theme-val="sunset" onclick="setTheme('sunset')">
+              <div class="theme-swatch" style="background:#ea580c"></div>
+              <span>Sunset Orange</span>
+              <i class="fas fa-check theme-check" id="check-sunset"></i>
+            </div>
+            <div class="theme-divider"></div>
+            <div class="theme-option" onclick="toggleMode()">
+              <i class="fas fa-sun" style="width:24px;text-align:center;color:var(--text-muted)"></i>
+              <span id="theme-mode-label">Light Mode</span>
+            </div>
+          </div>
+        </div>
         <div class="nav-status" id="ml-status">
           <div class="nl-status-dot"></div>
           <span>CatBoost</span>
@@ -164,6 +199,7 @@
   <script src="js/utils.js"></script>
   <script src="js/particles.js"></script>
   <script src="js/api.js"></script>
+  <script src="js/product-names.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/pages/dashboard.js"></script>
   <script src="js/pages/inventory.js"></script>

@@ -9,6 +9,119 @@ const ROUTES = {
 
 let currentPage = '';
 
+function showSkeletonForPage(page) {
+  const skeletons = {
+    dashboard: `
+      <div class="skeleton-hero"></div>
+      <div class="kpi-grid">
+        <div class="skeleton-kpi"></div>
+        <div class="skeleton-kpi"></div>
+        <div class="skeleton-kpi"></div>
+        <div class="skeleton-kpi"></div>
+      </div>
+      <div class="skeleton-insight"></div>
+      <div class="grid-2">
+        <div class="skeleton-chart"></div>
+        <div class="skeleton-chart"></div>
+      </div>
+      <div class="grid-2">
+        <div class="skeleton-table" style="height:200px"></div>
+        <div class="skeleton-table" style="height:200px"></div>
+      </div>
+    `,
+    inventory: `
+      <div class="card">
+        <div style="margin-bottom:20px">
+          <div class="skeleton-title"></div>
+        </div>
+        <div class="search-bar" style="opacity:0.3;pointer-events:none">
+          <div class="skeleton-text" style="height:42px;width:100%"></div>
+          <div class="skeleton-text" style="height:42px;width:160px"></div>
+          <div class="skeleton-text" style="height:42px;width:160px"></div>
+        </div>
+        <div class="skeleton-table"></div>
+        <div style="display:flex;justify-content:space-between;padding-top:12px">
+          <div class="skeleton-text" style="width:120px"></div>
+          <div style="display:flex;gap:4px">
+            <div class="skeleton-text" style="width:60px"></div>
+            <div class="skeleton-text" style="width:60px"></div>
+          </div>
+        </div>
+      </div>
+    `,
+    prediction: `
+      <div class="card">
+        <div class="skeleton-title" style="width:160px"></div>
+        <div class="grid-3">
+          <div class="skeleton-text" style="height:70px"></div>
+          <div class="skeleton-text" style="height:70px"></div>
+          <div class="skeleton-text" style="height:70px"></div>
+        </div>
+        <div class="grid-3">
+          <div class="skeleton-text" style="height:70px"></div>
+          <div class="skeleton-text" style="height:70px"></div>
+          <div class="skeleton-text" style="height:70px"></div>
+        </div>
+        <div class="grid-2">
+          <div class="skeleton-text" style="height:70px"></div>
+          <div class="skeleton-text" style="height:70px"></div>
+        </div>
+      </div>
+    `,
+    forecasting: `
+      <div class="card">
+        <div class="skeleton-title"></div>
+        <div class="forecast-controls" style="opacity:0.3;pointer-events:none">
+          <div class="skeleton-text" style="height:42px;width:200px"></div>
+          <div class="skeleton-text" style="height:42px;width:200px"></div>
+          <div class="skeleton-text" style="height:42px;width:100px"></div>
+        </div>
+        <div class="skeleton-chart"></div>
+      </div>
+    `,
+    analytics: `
+      <div class="card">
+        <div class="skeleton-title"></div>
+      </div>
+      <div class="insight-grid">
+        <div class="skeleton-insight"></div>
+        <div class="skeleton-insight"></div>
+        <div class="skeleton-insight"></div>
+        <div class="skeleton-insight"></div>
+      </div>
+      <div class="grid-2">
+        <div class="skeleton-chart"></div>
+        <div class="skeleton-chart"></div>
+      </div>
+      <div class="skeleton-chart" style="height:340px"></div>
+      <div class="summary-grid">
+        <div class="skeleton-insight" style="height:70px"></div>
+        <div class="skeleton-insight" style="height:70px"></div>
+        <div class="skeleton-insight" style="height:70px"></div>
+        <div class="skeleton-insight" style="height:70px"></div>
+      </div>
+    `,
+    'ml-insights': `
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+          <div class="skeleton-kpi" style="width:52px;height:52px;border-radius:14px"></div>
+          <div style="flex:1">
+            <div class="skeleton-title" style="width:280px"></div>
+            <div class="skeleton-text" style="width:200px"></div>
+          </div>
+        </div>
+        <div class="skeleton-insight"></div>
+      </div>
+      <div class="skeleton-chart" style="height:380px"></div>
+      <div class="grid-2">
+        <div class="skeleton-table" style="height:350px"></div>
+        <div class="skeleton-chart" style="height:350px"></div>
+      </div>
+    `,
+  };
+  return `<div class="page-skeleton">${skeletons[page] || '<div class="loading-screen"><div class="loader-ring"></div></div>'}</div>`;
+}
+
 function navigateTo(page) {
   window.location.hash = page;
 }
@@ -36,7 +149,7 @@ function typewriter(el, text, speed = 20) {
 }
 
 function addAnimateFade(container) {
-  container.querySelectorAll('.card, .kpi-card, .ml-model-card, .insight-card, .summary-item, .detail-item').forEach((el, i) => {
+  container.querySelectorAll('.card, .kpi-card, .ml-model-card, .insight-card, .summary-item, .detail-item, .forecast-overview-item, .hero-section, .ai-insight-card, .priority-item, .alert-item').forEach((el, i) => {
     el.classList.add('animate-fade');
     const delay = Math.min((i % 8) + 1, 8);
     el.classList.add('stagger-' + delay);
@@ -78,12 +191,7 @@ function handleRoute() {
       transitionOverlay.classList.remove('active');
     }
 
-    content.innerHTML = `
-      <div class="loading-screen">
-        <div class="loader-ring"><div class="loader-ring-inner"></div></div>
-        <p class="loader-text">Loading ${route.title.toLowerCase()}...</p>
-      </div>
-    `;
+    content.innerHTML = showSkeletonForPage(page);
 
     setTimeout(() => {
       try {
@@ -100,8 +208,8 @@ function handleRoute() {
           </div>
         `;
       }
-    }, 200);
-  }, 350);
+    }, 100);
+  }, 150);
 }
 
 window.addEventListener('hashchange', handleRoute);

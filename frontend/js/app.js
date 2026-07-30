@@ -2,7 +2,6 @@ let searchTimeout = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
-  updateThemeIcon();
 
   new ParticleNetwork('particle-canvas');
 
@@ -13,8 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
       glow.style.top = e.clientY + 'px';
     });
   }
-
-  document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
 
   const searchBtn = document.getElementById('search-btn');
   const globalSearch = document.getElementById('global-search');
@@ -55,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
           searchResults.innerHTML = data.map(r => `
             <div class="global-search-result" onclick="closeSearch();navigateTo('inventory');document.getElementById('inv-search')?.value='${q.replace(/'/g, "\\'")}';loadInventory()">
               <i class="fas fa-box" style="color:var(--primary-light);font-size:12px"></i>
-              <span>${r.product?.product_name || 'Unknown'}</span>
+              <span>${displayName(r.product)}</span>
               <span style="color:var(--text-muted);font-size:12px;margin-left:auto">${r.product?.category || ''} ${r.stock_status ? '<span class="badge badge-' + statusBadgeClass(r.stock_status) + '" style="font-size:10px">' + r.stock_status + '</span>' : ''}</span>
             </div>
           `).join('');

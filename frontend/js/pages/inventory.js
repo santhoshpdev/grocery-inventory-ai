@@ -1,5 +1,6 @@
 let invPage = 1;
 let lastInvData = null;
+let invForecastMap = {};
 
 function renderInventory(container) {
   container.innerHTML = `
@@ -52,7 +53,7 @@ function exportInvCSV() {
     return;
   }
   const flat = lastInvData.map(r => ({
-    Product: r.product?.product_name || 'Unknown',
+    Product: displayName(r.product) || 'Unknown',
     Category: r.product?.category || '',
     Inventory_Level: r.inventory_level,
     Units_Sold: r.units_sold,
@@ -82,8 +83,17 @@ async function loadInventory() {
   if (status) params.status = status;
 
   try {
-    const data = await API.inventory(params);
+    const [data, forecastData] = await Promise.all([
+      API.inventory(params),
+      API.forecastOverview().catch(() => []),
+    ]);
     lastInvData = data;
+    invForecastMap = {};
+    if (forecastData && forecastData.length > 0) {
+      forecastData.forEach(f => {
+        if (f.product_id) invForecastMap[f.product_id] = f;
+      });
+    }
     renderInvFilterSummary(search, category, status);
     renderInvTable(data);
   } catch (err) {
@@ -125,23 +135,33 @@ function renderInvTable(records) {
   document.getElementById('inv-info').textContent = `Showing ${records.length} records`;
 
   el.innerHTML = `
-    <div class="table-container">
+    <div class="table-container" style="opacity:0;animation:fadeIn 0.3s ease forwards">
       <table>
-        <thead><tr><th>Product</th><th>Category</th><th>Inventory</th><th>Sold</th><th>Price</th><th>Reorder</th><th>Demand</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Product</th><th>Category</th><th>Stock</th><th>Status</th><th>Demand Trend</th><th>Forecast Avg</th><th>Risk</th><th></th></tr></thead>
         <tbody>
-          ${records.map(r => `
-            <tr>
-              <td style="font-weight:600">${r.product?.product_name || 'Unknown'}</td>
+          ${records.map(r => {
+            const fc = invForecastMap[r.product_id];
+            const trend = fc?.summary?.trend || '—';
+            const trendIcon = trend === 'Increasing' ? '<i class="fas fa-arrow-up" style="color:#10b981;font-size:11px"></i>' : trend === 'Decreasing' ? '<i class="fas fa-arrow-down" style="color:#ef4444;font-size:11px"></i>' : trend === 'Stable' ? '<i class="fas fa-minus" style="color:#94a3b8;font-size:11px"></i>' : '—';
+            const avgFc = fc?.summary?.average_forecast || '—';
+            let risk = '—';
+            let riskClass = '';
+            if (r.stock_status === 'Low Stock' && trend === 'Increasing') { risk = 'Critical'; riskClass = 'badge-danger'; }
+            else if (r.stock_status === 'Low Stock') { risk = 'High'; riskClass = 'badge-warning'; }
+            else if (r.stock_status === 'Overstock' && trend === 'Decreasing') { risk = 'Warning'; riskClass = 'badge-warning'; }
+            else if (r.stock_status === 'Overstock') { risk = 'Low'; riskClass = 'badge-success'; }
+            else if (r.stock_status === 'Normal') { risk = 'Stable'; riskClass = 'badge-success'; }
+            return `<tr>
+              <td style="font-weight:600">${displayName(r.product)}</td>
               <td style="color:var(--text-muted)">${r.product?.category || '-'}</td>
               <td style="font-weight:600">${r.inventory_level}</td>
-              <td>${r.units_sold}</td>
-              <td>$${r.unit_price?.toFixed(2)}</td>
-              <td>${r.reorder_level}</td>
-              <td>${r.demand}</td>
               <td><span class="badge badge-${statusBadgeClass(r.stock_status)}">${r.stock_status}</span></td>
+              <td style="text-align:center">${trendIcon} <span style="font-size:12px;color:var(--text-muted)">${trend}</span></td>
+              <td style="font-weight:600;text-align:center">${avgFc}</td>
+              <td>${risk !== '—' ? `<span class="badge ${riskClass}">${risk}</span>` : '—'}</td>
               <td><button class="btn btn-outline" style="padding:5px 12px;font-size:12px" onclick="showDetail(${r.product_id})"><i class="fas fa-eye"></i></button></td>
-            </tr>
-          `).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>
@@ -161,7 +181,7 @@ async function showDetail(productId) {
 
   try {
     const data = await API.product(productId);
-    title.textContent = data.product_name + ' — Details';
+    title.textContent = displayName(data) + ' — Details';
     const r = data.inventory_records?.[0];
 
     if (!r) {

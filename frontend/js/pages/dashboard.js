@@ -1,5 +1,6 @@
 let statusChart = null;
 let categoryChart = null;
+let forecastTrendChart = null;
 
 function renderDashboard(container) {
   container.innerHTML = `
@@ -207,7 +208,7 @@ function renderPriority(data, total) {
   const items = [];
   if (alerts.length > 0) {
     alerts.slice(0, 3).forEach(a => {
-      items.push({ icon: 'fa-exclamation', iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', name: a.product_name, meta: `Inventory: ${a.inventory_level} units`, badge: 'Low Stock', badgeClass: 'badge-danger' });
+      items.push({ icon: 'fa-exclamation', iconBg: 'var(--danger-bg)', iconColor: 'var(--danger)', name: displayName(a.product_name), meta: `Inventory: ${a.inventory_level} units`, badge: 'Low Stock', badgeClass: 'badge-danger' });
     });
   }
   if (total) {
@@ -241,6 +242,8 @@ function createStatusChart(distribution) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (statusChart) statusChart.destroy();
+  const tc = chartTickColor();
+  const tooltipOpts = chartTooltip();
   statusChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
@@ -249,12 +252,15 @@ function createStatusChart(distribution) {
         data: distribution.map(d => d.count),
         backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
         borderWidth: 0,
+        hoverOffset: 8,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: '72%',
+      animation: { animateRotate: true, duration: 800 },
       plugins: {
-        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: '#94a3b8' } },
+        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: tc } },
+        tooltip: tooltipOpts,
       },
     },
   });
@@ -266,7 +272,10 @@ function createCategoryChart(distribution) {
   const ctx = canvas.getContext('2d');
   if (categoryChart) categoryChart.destroy();
   const data = distribution.slice(0, 10);
-  const colors = ['#059669','#10b981','#34d399','#6ee7b7','#a7f3d0','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a78bfa'];
+  const cols = chartColors();
+  const tc = chartTickColor();
+  const gc = chartGridColor();
+  const tooltipOpts = chartTooltip();
   categoryChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -274,16 +283,21 @@ function createCategoryChart(distribution) {
       datasets: [{
         label: 'Records',
         data: data.map(d => d.count),
-        backgroundColor: colors.slice(0, data.length),
-        borderRadius: 4,
+        backgroundColor: cols.slice(0, data.length),
+        borderRadius: 6,
+        borderSkipped: false,
       }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      animation: { duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: tooltipOpts,
+      },
       scales: {
-        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b' } },
-        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+        y: { beginAtZero: true, grid: { color: gc }, ticks: { color: tc } },
+        x: { grid: { display: false }, ticks: { color: tc } },
       },
     },
   });
@@ -322,14 +336,15 @@ async function renderForecastOverview() {
     }
     const increasing = overview.filter(o => o.summary?.trend === 'Increasing');
     const decreasing = overview.filter(o => o.summary?.trend === 'Decreasing');
+    const stable = overview.filter(o => o.summary?.trend === 'Stable');
     const highest = overview.reduce((a, b) => (a.summary?.average_forecast || 0) > (b.summary?.average_forecast || 0) ? a : b, overview[0]);
 
     el.innerHTML = `
       <div class="card" style="margin-top:4px">
         <div class="card-header">
           <div>
-            <div class="card-title"><i class="fas fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Forecast Overview</div>
-            <div class="card-subtitle">Demand trends from synthetic historical data</div>
+            <div class="card-title"><i class="fas fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Demand Forecast Trend</div>
+            <div class="card-subtitle">Future demand prediction across products</div>
           </div>
           <button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="navigateTo('forecasting')">
             <i class="fas fa-external-link-alt"></i> Open Forecasting
@@ -340,29 +355,108 @@ async function renderForecastOverview() {
             <div class="forecast-overview-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-arrow-trend-up"></i></div>
             <div>
               <div class="forecast-overview-value">${increasing.length}</div>
-              <div class="forecast-overview-label">Products with Increasing Demand</div>
+              <div class="forecast-overview-label">Demand Increasing</div>
+            </div>
+          </div>
+          <div class="forecast-overview-item">
+            <div class="forecast-overview-icon" style="background:rgba(100,116,139,0.1);color:#94a3b8"><i class="fas fa-minus"></i></div>
+            <div>
+              <div class="forecast-overview-value">${stable.length}</div>
+              <div class="forecast-overview-label">Demand Stable</div>
             </div>
           </div>
           <div class="forecast-overview-item">
             <div class="forecast-overview-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-arrow-trend-down"></i></div>
             <div>
               <div class="forecast-overview-value">${decreasing.length}</div>
-              <div class="forecast-overview-label">Products with Decreasing Demand</div>
+              <div class="forecast-overview-label">Demand Decreasing</div>
             </div>
           </div>
           <div class="forecast-overview-item">
             <div class="forecast-overview-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b"><i class="fas fa-trophy"></i></div>
             <div>
               <div class="forecast-overview-value">${highest.summary?.average_forecast || '—'}</div>
-              <div class="forecast-overview-label">Highest Forecasted Demand (units/day)</div>
+              <div class="forecast-overview-label">Highest Avg Forecast (units/day)</div>
             </div>
           </div>
         </div>
+        <div class="chart-container" style="height:280px;margin-top:16px"><canvas id="dash-forecast-chart"></canvas></div>
       </div>
     `;
+    safeChart(() => renderForecastTrendChart(overview));
   } catch (e) {
     el.innerHTML = '';
   }
+}
+
+function renderForecastTrendChart(overview) {
+  const canvas = document.getElementById('dash-forecast-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (forecastTrendChart) forecastTrendChart.destroy();
+
+  const cols = chartColors();
+  const tc = chartTickColor();
+  const gc = chartGridColor();
+  const tooltipOpts = chartTooltip();
+  const datasets = [];
+  const colors = cols;
+  const allLabels = new Set();
+
+  overview.slice(0, 6).forEach((item, idx) => {
+    if (!item.forecast) return;
+    const vals = {};
+    item.forecast.forEach(f => {
+      const shortDate = f.date.substring(5);
+      vals[shortDate] = f.predicted_demand;
+      allLabels.add(shortDate);
+    });
+    datasets.push({
+      label: 'Product ' + item.product_id,
+      data: Array.from(allLabels).map(d => vals[d] || null),
+      borderColor: colors[idx % colors.length],
+      backgroundColor: colors[idx % colors.length] + '18',
+      borderWidth: 2,
+      fill: false,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHitRadius: 8,
+    });
+  });
+
+  const sortedLabels = Array.from(allLabels).sort();
+
+  datasets.forEach(ds => {
+    ds.data = sortedLabels.map(d => {
+      const idx2 = ds.data.indexOf(d) > -1 ? null : null;
+      return ds.originalData ? null : null;
+    });
+  });
+
+  datasets.forEach(ds => {
+    ds.data = sortedLabels.map(d => {
+      const found = overview.slice(0, 6).find((_, i) => colors[i % colors.length] === ds.borderColor);
+      if (!found || !found.forecast) return null;
+      const match = found.forecast.find(f => f.date.substring(5) === d);
+      return match ? match.predicted_demand : null;
+    });
+  });
+
+  forecastTrendChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: sortedLabels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 12, color: tc, font: { size: 10 } } },
+        tooltip: tooltipOpts,
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: gc }, ticks: { color: tc }, title: { display: true, text: 'Demand (units)', color: tc } },
+        x: { grid: { display: false }, ticks: { color: tc, maxTicksLimit: 10 } },
+      },
+    },
+  });
 }
 
 function renderAlerts(alerts) {
@@ -374,7 +468,7 @@ function renderAlerts(alerts) {
         <i class="fas fa-exclamation" style="font-size:14px"></i>
       </div>
       <div style="flex:1">
-        <div style="font-weight:600;font-size:14px">${a.product_name}</div>
+        <div style="font-weight:600;font-size:14px">${displayName(a.product_name)}</div>
         <div style="font-size:12px;color:var(--text-muted)">Inventory Level: ${a.inventory_level} units</div>
       </div>
       <span class="badge badge-danger">Low Stock</span>

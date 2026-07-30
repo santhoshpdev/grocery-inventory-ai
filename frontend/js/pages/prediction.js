@@ -193,9 +193,9 @@ function displayResult(result) {
 
 function fillSampleData() {
   const samples = [
-    { label: 'Product_001 (Overstock)', data: {product_id:1, product_name:'Product_001', category:'Meat', supplier:'Supplier_6', store_id:5, inventory_level:272, units_sold:16, unit_price:40.98, purchase_cost:25.39, discount:5, temperature:28.3, holiday:0, promotion:1, lead_time:1, shelf_life:47, reorder_level:78, season:'Winter', demand:24 }},
-    { label: 'Product_041 (Low Stock)', data: {product_id:41, product_name:'Product_041', category:'Meat', supplier:'Supplier_9', store_id:4, inventory_level:49, units_sold:3, unit_price:18.55, purchase_cost:14.36, discount:20, temperature:37.6, holiday:0, promotion:1, lead_time:10, shelf_life:95, reorder_level:75, season:'Winter', demand:9 }},
-    { label: 'Product_007 (Normal)', data: {product_id:7, product_name:'Product_007', category:'Household', supplier:'Supplier_2', store_id:8, inventory_level:278, units_sold:42, unit_price:34.04, purchase_cost:27.38, discount:25, temperature:34.0, holiday:1, promotion:1, lead_time:5, shelf_life:364, reorder_level:118, season:'Winter', demand:49 }},
+    { label: displayName('Product_001') + ' (Overstock)', data: {product_id:1, product_name:'Product_001', category:'Meat', supplier:'Supplier_6', store_id:5, inventory_level:272, units_sold:16, unit_price:40.98, purchase_cost:25.39, discount:5, temperature:28.3, holiday:0, promotion:1, lead_time:1, shelf_life:47, reorder_level:78, season:'Winter', demand:24 }},
+    { label: displayName('Product_041') + ' (Low Stock)', data: {product_id:41, product_name:'Product_041', category:'Meat', supplier:'Supplier_9', store_id:4, inventory_level:49, units_sold:3, unit_price:18.55, purchase_cost:14.36, discount:20, temperature:37.6, holiday:0, promotion:1, lead_time:10, shelf_life:95, reorder_level:75, season:'Winter', demand:9 }},
+    { label: displayName('Product_007') + ' (Normal)', data: {product_id:7, product_name:'Product_007', category:'Household', supplier:'Supplier_2', store_id:8, inventory_level:278, units_sold:42, unit_price:34.04, purchase_cost:27.38, discount:25, temperature:34.0, holiday:1, promotion:1, lead_time:5, shelf_life:364, reorder_level:118, season:'Winter', demand:49 }},
   ];
   const sample = samples[0].data;
   const form = document.getElementById('predict-form');
@@ -203,5 +203,5 @@ function fillSampleData() {
     const el = form.elements[k];
     if (el) el.value = v;
   }
-  showToast('Loaded sample: Product_001 (expected: Overstock)', 'info');
+  showToast('Loaded sample: ' + displayName('Product_001') + ' (expected: Overstock)', 'info');
 }
