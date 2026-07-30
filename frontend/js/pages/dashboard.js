@@ -68,8 +68,12 @@ async function loadDashboardData() {
     renderHealthScore(healthScore);
     renderKPI(data, total);
     renderAIInsight(data, total);
-    safeChart(() => createStatusChart(data.status_distribution));
-    safeChart(() => createCategoryChart(data.category_distribution));
+    const renderStatusChart = () => createStatusChart(data.status_distribution);
+    const renderCategoryChart = () => createCategoryChart(data.category_distribution);
+    safeChart(renderStatusChart);
+    safeChart(renderCategoryChart);
+    registerChartRenderer(renderStatusChart);
+    registerChartRenderer(renderCategoryChart);
     renderPriority(data, total);
     renderForecastOverview();
     renderRecentPredictions(data.recent_predictions);
@@ -243,24 +247,53 @@ function createStatusChart(distribution) {
   const ctx = canvas.getContext('2d');
   if (statusChart) statusChart.destroy();
   const tc = chartTickColor();
+  const gc = chartGridColor();
   const tooltipOpts = chartTooltip();
+
+  const total = distribution.reduce((s, d) => s + d.count, 0);
+  const statusColors = { 'Low Stock': '#ef4444', 'Normal': '#f59e0b', 'Overstock': '#10b981' };
+
+  const sorted = [...distribution].sort((a, b) => b.count - a.count);
+
   statusChart = new Chart(ctx, {
-    type: 'doughnut',
+    type: 'bar',
     data: {
-      labels: distribution.map(d => d.status),
+      labels: sorted.map(d => d.status),
       datasets: [{
-        data: distribution.map(d => d.count),
-        backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
-        borderWidth: 0,
-        hoverOffset: 8,
+        label: 'Records',
+        data: sorted.map(d => d.count),
+        backgroundColor: sorted.map(d => statusColors[d.status] || '#64748b'),
+        borderRadius: 6,
+        borderSkipped: false,
+        barThickness: 36,
       }],
     },
     options: {
-      responsive: true, maintainAspectRatio: false, cutout: '72%',
-      animation: { animateRotate: true, duration: 800 },
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      animation: { duration: 800 },
       plugins: {
-        legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true, color: tc } },
-        tooltip: tooltipOpts,
+        legend: { display: false },
+        tooltip: {
+          ...tooltipOpts,
+          callbacks: {
+            label: function(ctx) {
+              const pct = total ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+              return ctx.raw + ' records (' + pct + '%)';
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: gc },
+          ticks: { color: tc, callback: function(v) { return Number.isInteger(v) ? v : ''; } },
+          title: { display: true, text: 'Records', color: tc },
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: tc, font: { size: 13, weight: '600' } },
+        },
       },
     },
   });
@@ -383,7 +416,9 @@ async function renderForecastOverview() {
         <div class="chart-container" style="height:280px;margin-top:16px"><canvas id="dash-forecast-chart"></canvas></div>
       </div>
     `;
-    safeChart(() => renderForecastTrendChart(overview));
+    const renderFcTrend = () => renderForecastTrendChart(overview);
+    safeChart(renderFcTrend);
+    registerChartRenderer(renderFcTrend);
   } catch (e) {
     el.innerHTML = '';
   }

@@ -112,10 +112,86 @@ async function loadPredictionHistory() {
   } catch (e) { /* history is optional */ }
 }
 
+function validateForm(form) {
+  const errors = [];
+  const fields = [
+    { name: 'product_id', label: 'Product ID', min: 1, max: 200 },
+    { name: 'product_name', label: 'Product Name', required: true },
+    { name: 'store_id', label: 'Store ID', min: 1, max: 10 },
+    { name: 'category', label: 'Category', required: true },
+    { name: 'supplier', label: 'Supplier', required: true },
+    { name: 'season', label: 'Season', required: true },
+    { name: 'inventory_level', label: 'Inventory Level', min: 30, max: 600 },
+    { name: 'units_sold', label: 'Units Sold', min: 1, max: 100 },
+    { name: 'unit_price', label: 'Unit Price', min: 0 },
+    { name: 'purchase_cost', label: 'Purchase Cost', min: 0 },
+    { name: 'discount', label: 'Discount', min: 0, max: 25 },
+    { name: 'temperature', label: 'Temperature', min: 15, max: 40 },
+    { name: 'holiday', label: 'Holiday', required: true },
+    { name: 'promotion', label: 'Promotion', required: true },
+    { name: 'lead_time', label: 'Lead Time', min: 1, max: 10 },
+    { name: 'shelf_life', label: 'Shelf Life', min: 3, max: 365 },
+    { name: 'reorder_level', label: 'Reorder Level', min: 40, max: 150 },
+    { name: 'demand', label: 'Demand', min: 1, max: 112 },
+  ];
+
+  const allFields = form.querySelectorAll('input, select');
+  allFields.forEach(el => el.style.borderColor = '');
+
+  for (const f of fields) {
+    const el = form.elements[f.name];
+    if (!el) continue;
+    const val = el.value.trim();
+    if (f.required && !val) {
+      errors.push(f.label + ' is required');
+      el.style.borderColor = 'var(--danger)';
+      continue;
+    }
+    if (f.min != null || f.max != null) {
+      const num = parseFloat(val);
+      if (isNaN(num)) {
+        errors.push(f.label + ' must be a number');
+        el.style.borderColor = 'var(--danger)';
+        continue;
+      }
+      if (f.min != null && num < f.min) {
+        errors.push(f.label + ' must be at least ' + f.min);
+        el.style.borderColor = 'var(--danger)';
+      }
+      if (f.max != null && num > f.max) {
+        errors.push(f.label + ' must be at most ' + f.max);
+        el.style.borderColor = 'var(--danger)';
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    document.getElementById('prediction-result').innerHTML = `
+      <div class="card" style="border-color:rgba(239,68,68,0.3);padding:20px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <i class="fas fa-exclamation-circle" style="font-size:22px;color:var(--danger)"></i>
+          <h3 style="font-size:16px;font-weight:700;color:var(--text)">Please fix the following errors</h3>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0">
+          ${errors.map(e => `<li style="padding:4px 0;font-size:13px;color:var(--text-secondary)"><i class="fas fa-times" style="color:var(--danger);width:18px;font-size:10px"></i> ${e}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+    const firstErr = form.querySelector('[style*="border-color: var(--danger)"]');
+    if (firstErr) firstErr.focus();
+    showToast(errors.length + ' validation error(s)', 'error');
+    return false;
+  }
+  return true;
+}
+
 async function submitPrediction(event) {
   event.preventDefault();
   const form = document.getElementById('predict-form');
   const btn = document.getElementById('predict-btn');
+
+  if (!validateForm(form)) return;
+
   const fd = new FormData(form);
   const data = Object.fromEntries(fd.entries());
 

@@ -34,6 +34,12 @@ function renderMLInsights(container) {
 }
 
 async function loadMLData() {
+  const skeleton = `
+    <div class="skeleton skeleton-card" style="height:120px"></div>
+    <div class="skeleton skeleton-chart" style="margin-top:16px"></div>
+  `;
+  document.getElementById('best-model').innerHTML = skeleton;
+
   try {
     const [metricsData, importanceData] = await Promise.all([
       API.metrics(),
@@ -41,12 +47,25 @@ async function loadMLData() {
     ]);
     renderBestModel(metricsData.models);
     renderMLDescription(metricsData.models, importanceData.features);
-    safeChart(() => renderModelChart(metricsData.models));
+    const renderMC = () => renderModelChart(metricsData.models);
+    safeChart(renderMC);
+    registerChartRenderer(renderMC);
     renderModelRankings(metricsData.models);
-    safeChart(() => renderImportanceChart(importanceData.features));
+    const renderIC = () => renderImportanceChart(importanceData.features);
+    safeChart(renderIC);
+    registerChartRenderer(renderIC);
     renderForecastMetrics();
   } catch (err) {
-    showToast('Failed to load ML insights: ' + err.message, 'error');
+    document.getElementById('best-model').innerHTML = `
+      <div style="text-align:center;padding:30px">
+        <i class="fas fa-exclamation-triangle" style="font-size:28px;color:var(--danger);margin-bottom:10px;display:block"></i>
+        <h3 style="color:var(--text);margin-bottom:4px">Failed to Load ML Insights</h3>
+        <p style="color:var(--text-muted);font-size:13px">${err.message}</p>
+        <button class="btn btn-outline mt-16" onclick="renderMLInsights(document.getElementById('page-content'))">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
   }
 }
 

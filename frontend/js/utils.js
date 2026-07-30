@@ -59,19 +59,23 @@ function statusBadgeClass(status) {
 }
 
 function initTheme() {
-  const savedTheme = localStorage.getItem('opencode_theme') || 'emerald';
-  const savedMode = localStorage.getItem('opencode_mode') || 'dark';
+  const themes = ['emerald', 'ocean', 'purple', 'rose', 'sunset'];
+  const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+  const randomMode = Math.random() < 0.5 ? 'dark' : 'light';
 
   const html = document.documentElement;
-  html.setAttribute('data-theme', savedTheme);
+  html.setAttribute('data-theme', randomTheme);
 
-  if (savedMode === 'light' && !html.hasAttribute('data-mode')) {
+  if (randomMode === 'light') {
     html.setAttribute('data-mode', 'light');
-  } else if (savedMode === 'dark') {
+  } else {
     html.removeAttribute('data-mode');
   }
 
-  updateThemeCheck(savedTheme);
+  localStorage.setItem('opencode_theme', randomTheme);
+  localStorage.setItem('opencode_mode', randomMode);
+
+  updateThemeCheck(randomTheme);
   updateThemeModeLabel();
 }
 
@@ -88,6 +92,8 @@ function setTheme(theme) {
     .forEach(el => {
       if (el) el.style.transition = 'background 0.4s ease, background-color 0.4s ease';
     });
+
+  setTimeout(refreshAllCharts, 50);
 }
 
 function toggleMode() {
@@ -105,6 +111,7 @@ function toggleMode() {
   updateThemeModeLabel();
   updateThemeIcon();
   closeThemeDropdown();
+  setTimeout(refreshAllCharts, 50);
 }
 
 function updateThemeCheck(theme) {
@@ -169,6 +176,20 @@ function chartGridColor() {
 function chartTickColor() {
   const style = getComputedStyle(document.documentElement);
   return style.getPropertyValue('--text-muted').trim() || '#64748b';
+}
+
+const _chartRenderers = [];
+
+function registerChartRenderer(fn) {
+  if (typeof fn === 'function' && !_chartRenderers.includes(fn)) {
+    _chartRenderers.push(fn);
+  }
+}
+
+function refreshAllCharts() {
+  _chartRenderers.forEach(fn => {
+    try { fn(); } catch (e) { console.warn('Chart re-render error:', e); }
+  });
 }
 
 function exportCSV(records, filename = 'inventory-export.csv') {

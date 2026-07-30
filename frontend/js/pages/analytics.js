@@ -11,8 +11,9 @@ function renderAnalytics(container) {
     <div class="insight-grid" id="insight-cards"></div>
     <div class="grid-2">
       <div class="card">
-        <div class="card-header"><div><div class="card-title">Stock Status Distribution</div><div class="card-subtitle">Current inventory health</div></div></div>
+        <div class="card-header"><div><div class="card-title">Stock Status Distribution</div><div class="card-subtitle">Analytical breakdown — count and percentage per status</div></div></div>
         <div class="chart-container"><canvas id="a-status-chart"></canvas></div>
+        <div id="a-status-metrics" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"></div>
       </div>
       <div class="card">
         <div class="card-header"><div><div class="card-title">Category-wise Records</div><div class="card-subtitle">Products grouped by category</div></div></div>
@@ -42,6 +43,13 @@ function renderAnalytics(container) {
 }
 
 async function loadAnalytics() {
+  const skeleton = `
+    <div class="insight-grid"><div class="skeleton skeleton-card" style="height:80px"></div><div class="skeleton skeleton-card" style="height:80px"></div><div class="skeleton skeleton-card" style="height:80px"></div><div class="skeleton skeleton-card" style="height:80px"></div></div>
+    <div class="grid-2"><div class="card skeleton-loading"><div class="skeleton skeleton-chart"></div></div><div class="card skeleton-loading"><div class="skeleton skeleton-chart"></div></div></div>
+    <div class="card skeleton-loading"><div class="skeleton skeleton-chart" style="height:260px"></div></div>
+  `;
+  document.getElementById('insight-cards').innerHTML = skeleton;
+
   try {
     const [data, forecastData] = await Promise.all([
       API.dashboard(),
@@ -70,65 +78,87 @@ async function loadAnalytics() {
       `<div class="summary-item"><div class="summary-value" style="color:${s.color}">${s.value}</div><div class="summary-label">${s.label}</div></div>`
     ).join('');
 
+    var renderAStatus = null;
+    var renderACategory = null;
+    var renderAStacked = null;
+
     safeChart(() => {
       const commonTooltip = chartTooltip();
       const tc = chartTickColor();
       const gc = chartGridColor();
       const cols = chartColors();
 
-      const ctx1 = document.getElementById('a-status-chart')?.getContext('2d');
-      if (ctx1) {
-        if (aStatusChart) aStatusChart.destroy();
-        aStatusChart = new Chart(ctx1, {
-          type: 'doughnut',
-          data: {
-            labels: data.status_distribution.map(d => d.status),
-            datasets: [{ data: data.status_distribution.map(d => d.count), backgroundColor: ['#ef4444','#f59e0b','#10b981'], borderWidth: 0, hoverOffset: 8 }],
-          },
-          options: { responsive: true, maintainAspectRatio: false, cutout: '68%',
-            animation: { animateRotate: true, duration: 800 },
-            plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, color: tc } }, tooltip: commonTooltip } },
-        });
-      }
+      const totalN = data.low_stock_count + data.normal_stock_count + data.overstock_count;
 
-      const ctx2 = document.getElementById('a-category-chart')?.getContext('2d');
-      if (ctx2) {
-        if (aCategoryChart) aCategoryChart.destroy();
-        aCategoryChart = new Chart(ctx2, {
+      renderAStatus = function() {
+        const ctx1 = document.getElementById('a-status-chart')?.getContext('2d');
+        if (!ctx1) return;
+        if (aStatusChart) aStatusChart.destroy();
+        const t = chartTooltip();
+        const tc2 = chartTickColor();
+        const gc2 = chartGridColor();
+        const statusC = { 'Low Stock': '#ef4444', 'Normal': '#f59e0b', 'Overstock': '#10b981' };
+        const sorted2 = [...data.status_distribution].sort((a, b) => b.count - a.count);
+        aStatusChart = new Chart(ctx1, {
           type: 'bar',
           data: {
-            labels: data.category_distribution.map(d => d.category),
-            datasets: [{ label: 'Records', data: data.category_distribution.map(d => d.count), backgroundColor: cols.slice(0, data.category_distribution.length), borderRadius: 6, borderSkipped: false }],
+            labels: sorted2.map(d => d.status),
+            datasets: [{ label: 'Records', data: sorted2.map(d => d.count), backgroundColor: sorted2.map(d => statusC[d.status] || '#64748b'), borderRadius: 6, borderSkipped: false, barThickness: 36 }],
           },
-          options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-            animation: { duration: 800 },
-            plugins: { legend: { display: false }, tooltip: commonTooltip },
-            scales: { x: { beginAtZero: true, grid: { color: gc }, ticks: { color: tc } }, y: { grid: { display: false }, ticks: { color: tc } } } },
+          options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', animation: { duration: 400 },
+            plugins: { legend: { display: false }, tooltip: { ...t, callbacks: { label: function(ctx2) { const p = totalN ? ((ctx2.raw / totalN) * 100).toFixed(1) : 0; return ctx2.raw + ' records (' + p + '%)'; } } } },
+            scales: { x: { beginAtZero: true, grid: { color: gc2 }, ticks: { color: tc2, callback: function(v) { return Number.isInteger(v) ? v : ''; } } }, y: { grid: { display: false }, ticks: { color: tc2, font: { size: 13, weight: '600' } } } },
+          },
         });
-      }
+        const metricsEl = document.getElementById('a-status-metrics');
+        if (metricsEl) {
+          const statusColors = { 'Low Stock': '#ef4444', 'Normal': '#f59e0b', 'Overstock': '#10b981' };
+          metricsEl.innerHTML = data.status_distribution.map(d => {
+            const pct = totalN ? ((d.count / totalN) * 100).toFixed(1) : 0;
+            return `<div style="flex:1;min-width:120px;padding:10px 14px;background:var(--bg-elevated);border-radius:var(--radius-xs);border:1px solid var(--border);text-align:center">
+              <div style="font-size:13px;font-weight:700;color:${statusColors[d.status] || 'var(--text)'}">${pct}%</div>
+              <div style="font-size:11px;color:var(--text-muted)">${d.status}</div>
+              <div style="font-size:10px;color:var(--text-muted)">${d.count.toLocaleString()} records</div>
+            </div>`;
+          }).join('');
+        }
+      };
 
-      if (forecastData && forecastData.length > 0) {
-        renderAnalyticsForecast(forecastData);
-      }
+      renderACategory = function() {
+        const ctx2 = document.getElementById('a-category-chart')?.getContext('2d');
+        if (!ctx2) return;
+        if (aCategoryChart) aCategoryChart.destroy();
+        const t = chartTooltip();
+        const tc2 = chartTickColor();
+        const gc2 = chartGridColor();
+        const cols2 = chartColors();
+        aCategoryChart = new Chart(ctx2, {
+          type: 'bar',
+          data: { labels: data.category_distribution.map(d => d.category), datasets: [{ label: 'Records', data: data.category_distribution.map(d => d.count), backgroundColor: cols2.slice(0, data.category_distribution.length), borderRadius: 6, borderSkipped: false }] },
+          options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', animation: { duration: 400 },
+            plugins: { legend: { display: false }, tooltip: t },
+            scales: { x: { beginAtZero: true, grid: { color: gc2 }, ticks: { color: tc2 } }, y: { grid: { display: false }, ticks: { color: tc2 } } } },
+        });
+      };
 
-      const ctx3 = document.getElementById('a-stacked-chart')?.getContext('2d');
-      if (ctx3 && data.category_distribution) {
+      renderAStacked = function() {
+        const ctx3 = document.getElementById('a-stacked-chart')?.getContext('2d');
+        if (!ctx3 || !data.category_distribution) return;
         if (aStackedChart) aStackedChart.destroy();
+        const t = chartTooltip();
+        const tc2 = chartTickColor();
+        const gc2 = chartGridColor();
         const categories = data.category_distribution.map(d => d.category);
-        const statuses = ['Low Stock', 'Normal', 'Overstock'];
-        const catColors = ['#059669','#10b981','#34d399','#6ee7b7','#a7f3d0','#0ea5e9','#3b82f6','#6366f1','#8b5cf6','#a78bfa'];
         const totalByCat = {};
         data.category_distribution.forEach(d => { totalByCat[d.category] = d.count; });
         const statusCounts = {};
-        statuses.forEach(s => { statusCounts[s] = {}; categories.forEach(c => { statusCounts[s][c] = 0; }); });
-        if (data.status_distribution) {
-          categories.forEach((c, i) => {
-            const count = totalByCat[c] || 0;
-            statusCounts['Normal'][c] = Math.round(count * (data.normal_stock_count / total));
-            statusCounts['Low Stock'][c] = Math.round(count * (data.low_stock_count / total));
-            statusCounts['Overstock'][c] = count - statusCounts['Normal'][c] - statusCounts['Low Stock'][c];
-          });
-        }
+        ['Low Stock', 'Normal', 'Overstock'].forEach(s => { statusCounts[s] = {}; categories.forEach(c => { statusCounts[s][c] = 0; }); });
+        categories.forEach((c) => {
+          const count = totalByCat[c] || 0;
+          statusCounts['Normal'][c] = Math.round(count * (data.normal_stock_count / total));
+          statusCounts['Low Stock'][c] = Math.round(count * (data.low_stock_count / total));
+          statusCounts['Overstock'][c] = count - statusCounts['Normal'][c] - statusCounts['Low Stock'][c];
+        });
         aStackedChart = new Chart(ctx3, {
           type: 'bar',
           data: {
@@ -139,15 +169,36 @@ async function loadAnalytics() {
               { label: 'Overstock', data: categories.map(c => statusCounts['Overstock'][c]), backgroundColor: '#10b981', borderRadius: 4 },
             ],
           },
-          options: { responsive: true, maintainAspectRatio: false,
-            animation: { duration: 800 },
-            scales: { x: { stacked: true, grid: { display: false }, ticks: { color: tc } }, y: { stacked: true, beginAtZero: true, grid: { color: gc }, ticks: { color: tc } } },
-            plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 12, color: tc } }, tooltip: commonTooltip } },
+          options: { responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+            scales: { x: { stacked: true, grid: { display: false }, ticks: { color: tc2 } }, y: { stacked: true, beginAtZero: true, grid: { color: gc2 }, ticks: { color: tc2 } } },
+            plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 12, color: tc2 } }, tooltip: t } },
         });
+      };
+
+      renderAStatus();
+      renderACategory();
+      renderAStacked();
+      registerChartRenderer(renderAStatus);
+      registerChartRenderer(renderACategory);
+      registerChartRenderer(renderAStacked);
+
+      if (forecastData && forecastData.length > 0) {
+        renderAnalyticsForecast(forecastData);
+        const renderAFc = () => renderAnalyticsForecast(forecastData);
+        registerChartRenderer(renderAFc);
       }
     });
   } catch (err) {
-    showToast('Failed to load analytics: ' + err.message, 'error');
+    document.getElementById('insight-cards').innerHTML = `
+      <div class="card" style="grid-column:1/-1;text-align:center;padding:40px;border-color:rgba(239,68,68,0.3)">
+        <i class="fas fa-exclamation-triangle" style="font-size:32px;color:var(--danger);margin-bottom:12px;display:block"></i>
+        <h3 style="color:var(--text);margin-bottom:6px">Failed to Load Analytics</h3>
+        <p style="color:var(--text-muted);font-size:14px">${err.message}</p>
+        <button class="btn btn-outline mt-16" onclick="renderAnalytics(document.getElementById('page-content'))">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
   }
 }
 
@@ -157,29 +208,32 @@ function renderAnalyticsForecast(forecastData) {
   const decreasing = forecastData.filter(o => o.summary?.trend === 'Decreasing');
   const stable = forecastData.filter(o => o.summary?.trend === 'Stable');
 
-  document.getElementById('analytics-forecast-grid').innerHTML = `
-    <div class="forecast-overview-item">
-      <div class="forecast-overview-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-arrow-trend-up"></i></div>
-      <div>
-        <div class="forecast-overview-value">${increasing.length}</div>
-        <div class="forecast-overview-label">Increasing Demand</div>
+  const gridEl = document.getElementById('analytics-forecast-grid');
+  if (gridEl) {
+    gridEl.innerHTML = `
+      <div class="forecast-overview-item">
+        <div class="forecast-overview-icon" style="background:rgba(16,185,129,0.1);color:#10b981"><i class="fas fa-arrow-trend-up"></i></div>
+        <div>
+          <div class="forecast-overview-value">${increasing.length}</div>
+          <div class="forecast-overview-label">Increasing Demand</div>
+        </div>
       </div>
-    </div>
-    <div class="forecast-overview-item">
-      <div class="forecast-overview-icon" style="background:rgba(100,116,139,0.1);color:#94a3b8"><i class="fas fa-minus"></i></div>
-      <div>
-        <div class="forecast-overview-value">${stable.length}</div>
-        <div class="forecast-overview-label">Stable Demand</div>
+      <div class="forecast-overview-item">
+        <div class="forecast-overview-icon" style="background:rgba(100,116,139,0.1);color:#94a3b8"><i class="fas fa-minus"></i></div>
+        <div>
+          <div class="forecast-overview-value">${stable.length}</div>
+          <div class="forecast-overview-label">Stable Demand</div>
+        </div>
       </div>
-    </div>
-    <div class="forecast-overview-item">
-      <div class="forecast-overview-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-arrow-trend-down"></i></div>
-      <div>
-        <div class="forecast-overview-value">${decreasing.length}</div>
-        <div class="forecast-overview-label">Decreasing Demand</div>
+      <div class="forecast-overview-item">
+        <div class="forecast-overview-icon" style="background:rgba(239,68,68,0.1);color:#ef4444"><i class="fas fa-arrow-trend-down"></i></div>
+        <div>
+          <div class="forecast-overview-value">${decreasing.length}</div>
+          <div class="forecast-overview-label">Decreasing Demand</div>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
 
   const ctx = document.getElementById('a-forecast-chart')?.getContext('2d');
   if (!ctx) return;

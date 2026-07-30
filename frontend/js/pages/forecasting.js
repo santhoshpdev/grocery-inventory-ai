@@ -108,7 +108,9 @@ async function generateForecast() {
     document.getElementById('forecast-results').style.display = 'block';
 
     renderForecastSummary(data.summary, horizon);
-    safeChart(() => renderForecastChart(data));
+    const renderFc = () => renderForecastChart(data);
+    safeChart(renderFc);
+    registerChartRenderer(renderFc);
     renderForecastInsight(data);
   } catch (err) {
     showToast('Forecast failed: ' + err.message, 'error');
@@ -155,6 +157,9 @@ function renderForecastChart(data) {
   const gc = chartGridColor();
   const tooltipOpts = chartTooltip();
 
+  const select = document.getElementById('forecast-product');
+  const productName = select ? select.options[select.selectedIndex]?.text || 'Selected Product' : 'Selected Product';
+
   const historicalDates = data.historical.map(d => d.date);
   const historicalDemand = data.historical.map(d => d.demand);
   const forecastDates = data.forecast.map(d => d.date);
@@ -171,6 +176,9 @@ function renderForecastChart(data) {
     ...forecastValues,
   ];
 
+  const histColor = cols[0];
+  const fcColor = cols.length > 1 ? cols[1] : cols[0];
+
   forecastChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -179,25 +187,41 @@ function renderForecastChart(data) {
         {
           label: 'Historical Demand',
           data: histWithGap,
-          borderColor: cols[0],
-          backgroundColor: cols[0] + '18',
-          borderWidth: 2,
+          borderColor: histColor,
+          backgroundColor: histColor + '18',
+          borderWidth: 2.5,
           fill: true,
           tension: 0.3,
           pointRadius: 2,
           pointHitRadius: 10,
+          pointBackgroundColor: histColor,
         },
         {
           label: 'Forecasted Demand',
           data: forecastWithGap,
-          borderColor: cols[1],
-          backgroundColor: cols[1] + '18',
-          borderWidth: 2,
-          borderDash: [6, 3],
+          borderColor: fcColor,
+          backgroundColor: fcColor + '18',
+          borderWidth: 2.5,
+          borderDash: [8, 4],
           fill: true,
           tension: 0.3,
           pointRadius: 3,
           pointHitRadius: 10,
+          pointBackgroundColor: fcColor,
+          pointStyle: 'rectRot',
+        },
+        {
+          label: 'Forecast Start',
+          data: allLabels.map(d => {
+            if (d === lastHistDate) return historicalDemand[historicalDemand.length - 1];
+            return null;
+          }),
+          borderColor: 'transparent',
+          backgroundColor: 'transparent',
+          pointRadius: 6,
+          pointBackgroundColor: fcColor,
+          pointStyle: 'triangle',
+          pointRotation: 0,
         },
       ],
     },
@@ -205,16 +229,45 @@ function renderForecastChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        title: {
+          display: true,
+          text: productName,
+          color: tc,
+          font: { size: 15, weight: '600' },
+          padding: { bottom: 8 },
+          align: 'start',
+        },
+        subtitle: {
+          display: true,
+          text: 'Historical demand vs forecasted demand for next ' + forecastDates.length + ' days',
+          color: chartTickColor(),
+          font: { size: 12 },
+          padding: { bottom: 12 },
+          align: 'start',
+        },
         legend: {
           position: 'top',
-          labels: { usePointStyle: true, padding: 16, color: tc },
+          labels: { usePointStyle: true, padding: 16, color: tc, font: { size: 12 } },
         },
         tooltip: {
           ...tooltipOpts,
           callbacks: {
+            title: function(items) {
+              if (items.length > 0) return productName + ' — ' + items[0].label;
+              return productName;
+            },
             label: function(ctx) {
               if (ctx.parsed.y === null) return null;
-              return ctx.dataset.label + ': ' + ctx.parsed.y + ' units';
+              if (ctx.dataset.label === 'Forecast Start') return null;
+              const isForecast = ctx.dataset.label === 'Forecasted Demand';
+              const prefix = isForecast ? 'Forecast' : 'Historical';
+              return prefix + ': ' + ctx.parsed.y + ' units/day';
+            },
+            afterLabel: function(ctx) {
+              if (ctx.parsed.y === null || ctx.dataset.label === 'Forecast Start') return null;
+              const tc2 = chartTickColor();
+              const isForecast = ctx.dataset.label === 'Forecasted Demand';
+              return isForecast ? 'Type: Forecast' : 'Type: Actual';
             },
           },
         },
@@ -224,13 +277,13 @@ function renderForecastChart(data) {
           beginAtZero: true,
           grid: { color: gc },
           ticks: { color: tc },
-          title: { display: true, text: 'Demand (units)', color: tc },
+          title: { display: true, text: 'Demand (units/day)', color: tc },
         },
         x: {
           grid: { display: false },
           ticks: {
             color: tc,
-            maxTicksLimit: 15,
+            maxTicksLimit: 12,
             callback: function(val, idx) {
               const label = this.getLabelForValue(val);
               return label ? label.substring(5) : '';
@@ -239,6 +292,35 @@ function renderForecastChart(data) {
         },
       },
     },
+    plugins: [{
+      id: 'forecastVerticalLine',
+      afterDraw: function(chart) {
+        if (!lastHistDate) return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || meta.data.length === 0) return;
+        const lastHistIndex = historicalDates.length - 1;
+        const point = meta.data[lastHistIndex];
+        if (!point) return;
+        const x = point.x;
+        const yAxis = chart.scales.y;
+        const ctx2 = chart.ctx;
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.setLineDash([6, 4]);
+        ctx2.strokeStyle = fcColor + '80';
+        ctx2.lineWidth = 1.5;
+        ctx2.moveTo(x, yAxis.top);
+        ctx2.lineTo(x, yAxis.bottom);
+        ctx2.stroke();
+        ctx2.restore();
+        ctx2.save();
+        ctx2.fillStyle = fcColor;
+        ctx2.font = '11px Inter, sans-serif';
+        ctx2.textAlign = 'center';
+        ctx2.fillText('▼ Forecast Starts Here', x, yAxis.top - 6);
+        ctx2.restore();
+      },
+    }],
   });
 }
 
