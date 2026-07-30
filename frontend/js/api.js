@@ -7,8 +7,14 @@ async function apiFetch(endpoint, options = {}, retries = API_RETRIES) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
+  const authHeaders = getAuthHeaders ? getAuthHeaders() : {};
+
   const config = {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+      ...(options.headers || {}),
+    },
     signal: controller.signal,
     ...options,
   };
@@ -16,6 +22,11 @@ async function apiFetch(endpoint, options = {}, retries = API_RETRIES) {
   try {
     const res = await fetch(url, config);
     clearTimeout(timeoutId);
+    if (res.status === 401) {
+      clearAuth();
+      window.location.reload();
+      throw new Error('Session expired. Please login again.');
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(err.detail || `HTTP ${res.status}`);
@@ -36,7 +47,40 @@ async function apiFetch(endpoint, options = {}, retries = API_RETRIES) {
 }
 
 const API = {
-  health: () => apiFetch('/health'),
+  health: () => apiFetch('/health', { headers: getAuthHeaders() }).catch(() => ({ status: 'error', ml_loaded: false })),
+
+  auth: {
+    login: (credentials) => apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    }),
+    me: () => apiFetch('/auth/me'),
+    logout: () => apiFetch('/auth/logout', { method: 'POST' }).catch(() => {}),
+  },
+
+  users: () => apiFetch('/auth/users'),
+  createUser: (data) => apiFetch('/auth/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getUser: (id) => apiFetch(`/auth/users/${id}`),
+  updateUser: (id, data) => apiFetch(`/auth/users/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  changeUserPassword: (id, data) => apiFetch(`/auth/users/${id}/password`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  updateUserStatus: (id, data) => apiFetch(`/auth/users/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+  updateUserRole: (id, data) => apiFetch(`/auth/users/${id}/role`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  }),
+
   dashboard: () => apiFetch('/dashboard'),
   products: (params = {}) => {
     const qs = new URLSearchParams(params).toString();

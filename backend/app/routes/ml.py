@@ -1,13 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.ml_service import ml_service
 from app.schemas import MetricsOut, FeatureImportanceOut, AnalyticsOut
+from app.models import User
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["ml"])
 
 
 @router.get("/ml/metrics", response_model=MetricsOut)
-def get_metrics():
+def get_metrics(current_user: User = Depends(get_current_user)):
     if not ml_service.is_loaded:
         raise HTTPException(status_code=503, detail="ML model not loaded")
 
@@ -25,7 +27,7 @@ def get_metrics():
 
 
 @router.get("/ml/feature-importance", response_model=FeatureImportanceOut)
-def get_feature_importance():
+def get_feature_importance(current_user: User = Depends(get_current_user)):
     if not ml_service.is_loaded:
         raise HTTPException(status_code=503, detail="ML model not loaded")
 
@@ -33,7 +35,7 @@ def get_feature_importance():
 
 
 @router.get("/analytics", response_model=AnalyticsOut)
-def get_analytics():
+def get_analytics(current_user: User = Depends(get_current_user)):
     return AnalyticsOut(
         status_distribution=[],
         category_distribution=[],

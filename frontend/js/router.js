@@ -1,10 +1,17 @@
 const ROUTES = {
-  dashboard: { title: 'Dashboard', subtitle: 'AI-Powered Inventory Overview', render: renderDashboard },
-  inventory: { title: 'Inventory', subtitle: 'Browse and Manage Products', render: renderInventory },
-  prediction: { title: 'AI Prediction', subtitle: 'ML-Powered Stock Status Classification', render: renderPrediction },
-  forecasting: { title: 'Demand Forecasting', subtitle: 'Historical Demand Analysis & Future Demand Estimation', render: renderForecasting },
-  analytics: { title: 'Analytics & Insights', subtitle: 'Data-Driven Inventory Intelligence', render: renderAnalytics },
-  'ml-insights': { title: 'ML Insights', subtitle: 'Model Performance & Explainability', render: renderMLInsights },
+  dashboard: { title: 'Dashboard', subtitle: 'AI-Powered Inventory Overview', render: renderDashboard, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER', 'INVENTORY_ANALYST'] },
+  inventory: { title: 'Inventory', subtitle: 'Browse and Manage Products', render: renderInventory, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER'] },
+  prediction: { title: 'AI Prediction', subtitle: 'ML-Powered Stock Status Classification', render: renderPrediction, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER', 'INVENTORY_ANALYST'] },
+  forecasting: { title: 'Demand Forecasting', subtitle: 'Historical Demand Analysis & Future Demand Estimation', render: renderForecasting, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER', 'INVENTORY_ANALYST'] },
+  analytics: { title: 'Analytics & Insights', subtitle: 'Data-Driven Inventory Intelligence', render: renderAnalytics, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER', 'INVENTORY_ANALYST'] },
+  'ml-insights': { title: 'ML Insights', subtitle: 'Model Performance & Explainability', render: renderMLInsights, roles: ['SYSTEM_ADMIN', 'INVENTORY_MANAGER', 'INVENTORY_ANALYST'] },
+  users: { title: 'User Management', subtitle: 'Administrative User Management', render: renderUsers, roles: ['SYSTEM_ADMIN'] },
+};
+
+const ROLE_NAV = {
+  'SYSTEM_ADMIN': ['dashboard', 'inventory', 'prediction', 'forecasting', 'analytics', 'ml-insights', 'users'],
+  'INVENTORY_MANAGER': ['dashboard', 'inventory', 'prediction', 'forecasting', 'analytics', 'ml-insights'],
+  'INVENTORY_ANALYST': ['dashboard', 'prediction', 'forecasting', 'analytics', 'ml-insights'],
 };
 
 let currentPage = '';
@@ -118,6 +125,12 @@ function showSkeletonForPage(page) {
         <div class="skeleton-chart" style="height:350px"></div>
       </div>
     `,
+    users: `
+      <div class="card">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-table"></div>
+      </div>
+    `,
   };
   return `<div class="page-skeleton">${skeletons[page] || '<div class="loading-screen"><div class="loader-ring"></div></div>'}</div>`;
 }
@@ -128,7 +141,25 @@ function navigateTo(page) {
 
 function getCurrentPage() {
   const hash = window.location.hash.replace('#', '');
-  return hash && ROUTES[hash] ? hash : 'dashboard';
+  if (!hash || !ROUTES[hash]) return 'dashboard';
+  const user = getCurrentUser();
+  if (!user) return 'dashboard';
+  const allowedPages = ROLE_NAV[user.role] || ['dashboard'];
+  if (!allowedPages.includes(hash)) return allowedPages[0] || 'dashboard';
+  return hash;
+}
+
+function updateRoleBasedNav() {
+  const user = getCurrentUser();
+  if (!user) return;
+  const allowedPages = ROLE_NAV[user.role] || ['dashboard'];
+
+  document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(el => {
+    const page = el.dataset.page;
+    if (page === 'users') {
+      el.style.display = allowedPages.includes(page) ? '' : 'none';
+    }
+  });
 }
 
 function typewriter(el, text, speed = 20) {
@@ -168,6 +199,17 @@ function handleRoute() {
   currentPage = page;
 
   const route = ROUTES[page];
+  if (!route) {
+    navigateTo('dashboard');
+    return;
+  }
+
+  const user = getCurrentUser();
+  if (!user || !hasRole(route.roles)) {
+    navigateTo(ROLE_NAV[user?.role]?.[0] || 'dashboard');
+    return;
+  }
+
   const titleEl = document.getElementById('page-title');
   const subEl = document.getElementById('page-subtitle');
 

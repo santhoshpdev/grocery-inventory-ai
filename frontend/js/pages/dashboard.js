@@ -241,6 +241,19 @@ function renderPriority(data, total) {
   `;
 }
 
+function getThemeTextColor() {
+  const style = getComputedStyle(document.documentElement);
+  const isLight = document.documentElement.getAttribute('data-mode') === 'light' || document.documentElement.getAttribute('data-theme') === 'light';
+  const text = style.getPropertyValue('--text').trim();
+  if (text) return text;
+  return isLight ? '#0f172a' : '#f0f4f8';
+}
+
+function getThemeMutedColor() {
+  const style = getComputedStyle(document.documentElement);
+  return style.getPropertyValue('--text-muted').trim() || '#64748b';
+}
+
 const statusChartPlugin = {
   id: 'centerText',
   beforeDraw(chart) {
@@ -252,10 +265,10 @@ const statusChartPlugin = {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = '700 26px Inter, sans-serif';
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#f0f4f8';
+    ctx.fillStyle = getThemeTextColor();
     ctx.fillText(total.toLocaleString(), cx, cy - 4);
     ctx.font = '500 11px Inter, sans-serif';
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#64748b';
+    ctx.fillStyle = getThemeMutedColor();
     ctx.fillText('Total Records', cx, cy + 18);
     ctx.restore();
   },

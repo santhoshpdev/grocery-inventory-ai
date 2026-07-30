@@ -2,29 +2,34 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Product, InventoryRecord
+from app.models import Product, InventoryRecord, User
 from app.schemas import ForecastRequest, ForecastResponse
 from app.services.forecasting_service import forecasting_service
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["forecast"])
 
 
 @router.get("/forecast/products")
-def get_forecast_products():
+def get_forecast_products(current_user: User = Depends(get_current_user)):
     if not forecasting_service.is_loaded:
         raise HTTPException(status_code=503, detail="Forecasting service not available")
     return forecasting_service.get_products()
 
 
 @router.get("/forecast/overview")
-def get_forecast_overview():
+def get_forecast_overview(current_user: User = Depends(get_current_user)):
     if not forecasting_service.is_loaded:
         raise HTTPException(status_code=503, detail="Forecasting service not available")
     return forecasting_service.forecast_overview()
 
 
 @router.post("/forecast", response_model=ForecastResponse)
-def get_forecast(request: ForecastRequest, db: Session = Depends(get_db)):
+def get_forecast(
+    request: ForecastRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     try:
         result = forecasting_service.forecast(request.product_id, request.horizon)
 

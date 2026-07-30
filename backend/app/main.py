@@ -5,9 +5,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine, Base
-from app.routes import dashboard, products, prediction, ml, chat, forecast
+from app.routes import dashboard, products, prediction, ml, chat, forecast, auth, auth
 from app.services.ml_service import ml_service
 from app.services.forecasting_service import forecasting_service
+from app.config import settings
+from app.auth import hash_password
 
 
 def wait_for_db(max_retries=30, delay=2):
@@ -27,7 +29,7 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     print("Database tables created")
 
-    from app.models import Product
+    from app.models import Product, User
     from sqlalchemy.orm import Session
     from app.database import SessionLocal
 
@@ -35,6 +37,21 @@ def init_db():
     try:
         if db.query(Product).count() == 0:
             seed_data(db)
+
+        admin = db.query(User).filter(User.role == "SYSTEM_ADMIN").first()
+        if admin is None:
+            print("Creating default System Administrator")
+            admin = User(
+                username=settings.default_admin_username,
+                password_hash=hash_password(settings.default_admin_password),
+                role="SYSTEM_ADMIN",
+                is_active=True,
+            )
+            db.add(admin)
+            db.commit()
+            print(f"Default admin created: {settings.default_admin_username}")
+        else:
+            print(f"System Administrator already exists: {admin.username}")
     finally:
         db.close()
 
@@ -122,6 +139,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(products.router)
 app.include_router(prediction.router)

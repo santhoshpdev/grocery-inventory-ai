@@ -3,14 +3,18 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Product, InventoryRecord, Prediction
+from app.models import Product, InventoryRecord, Prediction, User
 from app.schemas import DashboardOut
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
 
 
 @router.get("/dashboard", response_model=DashboardOut)
-def get_dashboard(db: Session = Depends(get_db)):
+def get_dashboard(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     total_products = db.query(func.count(Product.id)).scalar() or 0
     total_records = db.query(func.count(InventoryRecord.id)).scalar() or 0
 

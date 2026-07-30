@@ -2,15 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Prediction
+from app.models import Prediction, User
 from app.schemas import PredictRequest, PredictResponse
 from app.services.ml_service import ml_service
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["prediction"])
 
 
 @router.post("/predict", response_model=PredictResponse)
-def predict(request: PredictRequest, db: Session = Depends(get_db)):
+def predict(
+    request: PredictRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     if not ml_service.is_loaded:
         raise HTTPException(
             status_code=503,
@@ -35,7 +40,12 @@ def predict(request: PredictRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/predictions")
-def get_predictions(page: int = 1, per_page: int = 20, db: Session = Depends(get_db)):
+def get_predictions(
+    page: int = 1,
+    per_page: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     query = db.query(Prediction).order_by(Prediction.created_at.desc())
     total = query.count()
     preds = query.offset((page - 1) * per_page).limit(per_page).all()

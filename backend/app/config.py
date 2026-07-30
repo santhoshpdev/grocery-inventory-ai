@@ -11,6 +11,11 @@ class Settings(BaseSettings):
 
     model_dir: str = "/app/backend/ml_models"
 
+    jwt_secret: str = "stockintel-ai-super-secret-key-change-in-production"
+    default_admin_username: str = "admin"
+    default_admin_password: str = "admin123"
+    default_admin_role: str = "SYSTEM_ADMIN"
+
     model_config = {"env_file": ".env", "extra": "ignore", "protected_namespaces": ("settings_",)}
 
 

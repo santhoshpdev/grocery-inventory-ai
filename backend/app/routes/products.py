@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 
 from app.database import get_db
-from app.models import Product, InventoryRecord
+from app.models import Product, InventoryRecord, User
 from app.schemas import ProductOut, ProductDetailOut, InventoryRecordOut
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api", tags=["products"])
 
@@ -20,6 +21,7 @@ def list_products(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     query = db.query(Product)
 
@@ -46,7 +48,11 @@ def list_products(
 
 
 @router.get("/products/{product_id}", response_model=ProductDetailOut)
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     product = (
         db.query(Product)
         .options(joinedload(Product.inventory_records))
@@ -66,6 +72,7 @@ def list_inventory(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     query = db.query(InventoryRecord).options(joinedload(InventoryRecord.product))
 

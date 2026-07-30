@@ -22,7 +22,54 @@
 
   <div class="mouse-glow" id="mouse-glow"></div>
 
-  <nav class="navbar" id="navbar">
+  <!-- LOGIN PAGE -->
+  <div class="login-page" id="login-page">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h1 class="login-title">Grocery Inventory</h1>
+        <p class="login-subtitle">Intelligent Inventory Decisions</p>
+      </div>
+      <div class="login-body">
+        <div class="login-welcome">Welcome Back</div>
+        <p class="login-desc">Sign in to continue</p>
+        <form id="login-form" onsubmit="return handleLogin(event)">
+          <div class="login-field">
+            <label for="login-username">
+              <i class="fas fa-user"></i>
+              <span>Username</span>
+            </label>
+            <input type="text" id="login-username" placeholder="Enter your username" autocomplete="username" required />
+          </div>
+          <div class="login-field">
+            <label for="login-password">
+              <i class="fas fa-lock"></i>
+              <span>Password</span>
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" required />
+              <button type="button" class="password-toggle" onclick="togglePassword()">
+                <i class="fas fa-eye" id="password-toggle-icon"></i>
+              </button>
+            </div>
+          </div>
+          <div class="login-error" id="login-error"></div>
+          <button type="submit" class="login-btn" id="login-btn">
+            <span class="login-btn-text">Sign In</span>
+            <i class="fas fa-spinner fa-spin login-btn-spinner" style="display:none"></i>
+          </button>
+        </form>
+      </div>
+      <div class="login-footer">
+        <i class="fas fa-shield-alt"></i>
+        <span>Secure Local Access</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="navbar" id="navbar" style="display:none">
     <div class="nav-inner">
       <div class="nav-left">
         <a href="#dashboard" class="nav-brand">
@@ -60,6 +107,10 @@
           <a href="#ml-insights" class="nav-link" data-page="ml-insights">
             <i class="fas fa-flask nav-link-icon"></i>
             <span>ML Insights</span>
+          </a>
+          <a href="#users" class="nav-link" data-page="users" id="nav-users-link" style="display:none">
+            <i class="fas fa-users-cog nav-link-icon"></i>
+            <span>Users</span>
           </a>
         </div>
         <div class="nav-indicator" id="nav-indicator"></div>
@@ -106,6 +157,18 @@
             </div>
           </div>
         </div>
+        <div class="nav-user-profile" id="nav-user-profile">
+          <div class="nav-user-avatar" id="nav-user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="nav-user-info">
+            <div class="nav-user-name" id="nav-user-name">admin</div>
+            <div class="nav-user-role" id="nav-user-role">System Administrator</div>
+          </div>
+          <button class="nav-user-logout" onclick="handleLogout()" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
         <div class="nav-status" id="ml-status">
           <div class="nl-status-dot"></div>
           <span>CatBoost</span>
@@ -139,12 +202,25 @@
       <a href="#ml-insights" class="mobile-nav-link" data-page="ml-insights">
         <i class="fas fa-flask"></i><span>ML Insights</span>
       </a>
+      <a href="#users" class="mobile-nav-link" data-page="users" id="mobile-nav-users-link" style="display:none">
+        <i class="fas fa-users-cog"></i><span>Users</span>
+      </a>
+      <div class="mobile-nav-divider"></div>
+      <div class="mobile-nav-user" id="mobile-nav-user">
+        <div class="mobile-nav-user-info">
+          <div class="nav-user-name" id="mobile-user-name">admin</div>
+          <div class="nav-user-role" id="mobile-user-role">System Administrator</div>
+        </div>
+        <button class="mobile-nav-logout" onclick="handleLogout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
     </div>
   </nav>
 
   <div class="page-transition-overlay" id="page-transition"></div>
 
-  <main class="main-content" id="main-content">
+  <main class="main-content" id="main-content" style="display:none">
     <div class="page-container">
       <header class="page-header">
         <div>
@@ -198,6 +274,7 @@
 
   <script src="js/utils.js"></script>
   <script src="js/particles.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/api.js"></script>
   <script src="js/product-names.js"></script>
   <script src="js/chat.js"></script>
@@ -207,6 +284,7 @@
   <script src="js/pages/forecasting.js"></script>
   <script src="js/pages/analytics.js"></script>
   <script src="js/pages/ml-insights.js"></script>
+  <script src="js/pages/users.js"></script>
   <script src="js/router.js"></script>
   <script src="js/app.js"></script>
 </body>
